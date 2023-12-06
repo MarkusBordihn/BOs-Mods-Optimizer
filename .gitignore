@@ -1,0 +1,53 @@
+# Eclipse
+bin
+eclipse
+.classpath
+.metadata
+.project
+.settings
+*.launch
+
+# Idea
+out
+.idea
+*.ipr
+*.iws
+*.iml
+
+# Gradle
+build
+run
+.gradle
+*local.properties
+
+# NodeJs
+node_modules
+npm-debug.log
+
+# Files from Forge MDK
+forge*changelog.txt
+
+# Local Maven repro
+.mcmodsrepo
+
+# VSCode
+.vscode/launch.json
+
+# Other
+.DS_Store
+generated
+logs
+*.bak
+*.clip
+*.log
+*.patch.txt
+*.stackdump
+
+# Launch files
+core/.vscode/launch.json
+gamerules/.vscode/launch.json
+items/.vscode/launch.json
+mods/.vscode/launch.json
+player/.vscode/launch.json
+server/.vscode/launch.json
+spawn/.vscode/launch.json
