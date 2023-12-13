@@ -3,10 +3,6 @@
 
 ![Mods Optimizer: Mods][logo]
 
-Mods Optimizer is a collection of Minecraft Forge server-side Mod which automatically
-adjust specific settings on the server to allow a more balanced TPS/FPS.
-The goal of this mod is to allow a smoother experience on a server with several (=> 180) Mods.
-
 ## Please read before using ⚠️
 
 This mod is renaming / moving your mod files, for this reason it is important that you have regular
@@ -23,11 +19,6 @@ There is no longer the need to have a separated "server" and "client" mod pack o
 
 This mod automatically clean up duplicated files, by removing older versions.
 This is helpful to avoid duplication issues and manual deleting of older versions.
-
-## ⏱️ Total Start Time Logging
-
-Measure and logs the total start time of the client and server inside the log.
-This makes it ideal to optimize the loading time of mods packs without using a manual stop clock.
 
 ## How to use the mod ?
 
