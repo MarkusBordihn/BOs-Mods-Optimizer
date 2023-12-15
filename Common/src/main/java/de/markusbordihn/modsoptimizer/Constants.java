@@ -29,7 +29,7 @@ public final class Constants {
   public static final String LOG_PREFIX = "[Mods Optimizer]";
   public static final String MOD_ID = "mods_optimizer";
   public static final String MOD_NAME = "Mods Optimizer";
-  public static final String MINECRAFT_VERSION = "1.20.3";
+  public static final String MINECRAFT_VERSION = "1.20.4";
 
   // Logger
   public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
