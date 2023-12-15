@@ -46,6 +46,7 @@ class ModsDatabaseConfigTests {
   void testContainsMod() {
     assertTrue(ModsDatabaseConfig.containsMod("server_side_mod_id"));
     assertTrue(ModsDatabaseConfig.containsMod("client_side_mod_id"));
+    assertTrue(ModsDatabaseConfig.containsMod("default_side_mod_id"));
   }
 
   @Test

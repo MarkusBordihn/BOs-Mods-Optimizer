@@ -1,7 +1,7 @@
 [![Mods Optimizer Downloads](http://cf.way2muchnoise.eu/full_947247_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/mods-optimizer)
 [![Mods Optimizer Versions](http://cf.way2muchnoise.eu/versions/Minecraft_947247_all.svg)](https://www.curseforge.com/minecraft/mc-mods/mods-optimizer)
 
-![Mods Optimizer: Mods][logo]
+![Mods Optimizer][logo]
 
 ## Please read before using ⚠️
 
@@ -34,4 +34,8 @@ The mod is mostly helpful if it is used on the server and the client side.
 If you want to see this mod in action, please take a look at:
 https://www.curseforge.com/minecraft/modpacks/bos-adventure-world
 
-[logo]: src/main/resources/logo.png
+## ℹ️ More Information
+
+Please take a look at our wiki https://github.com/MarkusBordihn/BOs-Mods-Optimizer/wiki for additional information.
+
+[logo]: Common/src/main/resources/logo.png

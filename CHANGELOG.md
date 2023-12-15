@@ -5,7 +5,7 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
-### v1.0.1
+### v1.1.0
 
 - Added mods reader for `mods.toml` files.
 - Added mods reader for `farbric.mod.json` files.

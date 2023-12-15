@@ -40,7 +40,7 @@ class ModDataTests {
   @Test
   void testModPathExists() {
     System.out.printf("Test Mod Files: %s\n", testModFiles);
-    assertTrue (testModFiles.exists());
+    assertTrue(testModFiles.exists());
   }
 
   @Test

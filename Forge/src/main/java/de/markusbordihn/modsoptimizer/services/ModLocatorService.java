@@ -23,6 +23,7 @@ import cpw.mods.modlauncher.Environment;
 import cpw.mods.modlauncher.Launcher;
 import cpw.mods.modlauncher.api.IEnvironment;
 import de.markusbordihn.modsoptimizer.Constants;
+import de.markusbordihn.modsoptimizer.config.ModsDatabaseConfig;
 import de.markusbordihn.modsoptimizer.data.ModData;
 import de.markusbordihn.modsoptimizer.utils.ClientSideModsUtils;
 import de.markusbordihn.modsoptimizer.utils.DuplicatedModsUtils;
@@ -31,6 +32,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -44,28 +46,42 @@ public class ModLocatorService implements IModLocator {
   private static final File MODS_DIR = FMLPaths.MODSDIR.get().toFile();
 
   public ModLocatorService() {
+    long totalStartTime = System.nanoTime();
     long startTime = System.nanoTime();
 
     // Detect environment.
     Environment environment = Launcher.INSTANCE.environment();
     Optional<String> launchTarget = environment.getProperty(IEnvironment.Keys.LAUNCHTARGET.get());
     boolean isClient = true;
-    if (launchTarget.isPresent()) {
-      if (launchTarget.get().contains("server")) {
+    if (ModsDatabaseConfig.isDebugEnabled()) {
+      Constants.LOG.warn("⚠ Debug mode is enabled!");
+    }
+    if (ModsDatabaseConfig.isDebugEnabled()
+        && !Objects.equals(ModsDatabaseConfig.getDebugForceSide(), "default")) {
+      if (Objects.equals(ModsDatabaseConfig.getDebugForceSide(), "server")) {
+        Constants.LOG.info("⚠ Forced server side environment ...");
         isClient = false;
+      } else if (Objects.equals(ModsDatabaseConfig.getDebugForceSide(), "client")) {
+        Constants.LOG.info("⚠ Forced client side environment ...");
       }
     } else {
-      Constants.LOG.warn(
-          "⚠ Unable to detect environment will check game dir for additional hints ...");
-      File[] gameFiles = GAME_DIR.listFiles();
-      if (gameFiles == null) {
-        Constants.LOG.warn("⚠ Unable to detect game files in game dir {}", GAME_DIR);
-        return;
-      }
-      for (File gameFile : gameFiles) {
-        if (gameFile.getName().contains("server")) {
+      if (launchTarget.isPresent()) {
+        if (launchTarget.get().contains("server")) {
           isClient = false;
-          break;
+        }
+      } else {
+        Constants.LOG.warn(
+            "⚠ Unable to detect environment will check game dir for additional hints ...");
+        File[] gameFiles = GAME_DIR.listFiles();
+        if (gameFiles == null) {
+          Constants.LOG.warn("⚠ Unable to detect game files in game dir {}", GAME_DIR);
+          return;
+        }
+        for (File gameFile : gameFiles) {
+          if (gameFile.getName().contains("server")) {
+            isClient = false;
+            break;
+          }
         }
       }
     }
@@ -77,28 +93,28 @@ public class ModLocatorService implements IModLocator {
         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
 
     // Re-enable client side mods on client.
-    startTime = System.nanoTime();
     if (isClient) {
+      startTime = System.nanoTime();
       Constants.LOG.info("✔ Re-Enable possible client side mods ...");
       int numClientSideModsEnabled = ClientSideModsUtils.enable(MODS_DIR);
       if (numClientSideModsEnabled > 0) {
         Constants.LOG.info(
-            "✔ Re-Enabled {} possible client side mods in {} ms.",
+            "✔ Re-Enabled {} client side mods in {} ms.",
             numClientSideModsEnabled,
             TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
       }
     }
 
-    // Collect mods data.
+    // Parsing mods data.
     startTime = System.nanoTime();
-    Constants.LOG.info("♻ Collecting Mods data ...");
+    Constants.LOG.info("♻ Parsing Mods data ...");
     ModData.parseMods(MODS_DIR, ".jar");
     if (ModData.getKnownMods().isEmpty()) {
       Constants.LOG.error("⚠ Unable to find any mods in {}", MODS_DIR);
       return;
     }
     Constants.LOG.info(
-        "♻ Collected {} mods in {} ms.",
+        "♻ Parsed {} mods in {} ms.",
         ModData.getKnownMods().size(),
         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
 
@@ -110,21 +126,33 @@ public class ModLocatorService implements IModLocator {
           "♻ Optimized {} duplicated mods in {} ms.",
           ModData.getDuplicatedMods().size(),
           TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
+    } else {
+      Constants.LOG.info("✔ No duplicated mods found.");
     }
 
     // Disable client side mods on ded-server.
-    startTime = System.nanoTime();
     if (!isClient && !ModData.getClientMods().isEmpty()) {
+      startTime = System.nanoTime();
       Constants.LOG.info(
-          "X Disable possible {} client side mods ...", ModData.getClientMods().size());
+          "❌ Disable possible {} client side mods ...", ModData.getClientMods().size());
       int numClientSideModsDisabled = ClientSideModsUtils.disable(ModData.getClientMods());
       if (numClientSideModsDisabled > 0) {
         Constants.LOG.info(
-            "X Disabled {} possible client side mods in {} ms.",
+            "❌ Disabled {} client side mods in {} ms.",
             numClientSideModsDisabled,
             TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
+      } else {
+        Constants.LOG.info("❌ Unable to disable any client side mods.");
       }
+    } else if (!isClient) {
+      Constants.LOG.info("✔ No client side mods found.");
+    } else {
+      Constants.LOG.info("✔ Client side mods are enabled.");
     }
+
+    Constants.LOG.info(
+        "⏱ Mod Optimizer needs {} ms in total.",
+        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - totalStartTime));
   }
 
   @Override

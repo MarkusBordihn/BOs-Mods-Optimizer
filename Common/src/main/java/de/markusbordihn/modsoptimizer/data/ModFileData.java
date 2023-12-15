@@ -205,7 +205,7 @@ public record ModFileData(
       try {
         return LocalDateTime.parse(timestamp, dateTimeFormatter);
       } catch (Exception e) {
-        Constants.LOG.error("Was unable to parse timestamp {}:", timestamp, e);
+        Constants.LOG.warn("Was unable to parse timestamp {}:", timestamp);
       }
     }
     return EMPTY_TIMESTAMP;

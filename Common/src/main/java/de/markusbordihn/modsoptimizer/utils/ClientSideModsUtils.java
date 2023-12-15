@@ -22,13 +22,10 @@ import de.markusbordihn.modsoptimizer.Constants;
 import de.markusbordihn.modsoptimizer.data.ModFileData;
 import java.io.File;
 import java.util.Set;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ClientSideModsUtils {
 
   public static final String CLIENT_MOD_EXTENSION = ".client";
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
   private static final String LOG_PREFIX = "[Client Side Mod]";
 
   protected ClientSideModsUtils() {}
@@ -36,7 +33,7 @@ public class ClientSideModsUtils {
   public static int enable(File modPath) {
     int result = 0;
     if (modPath == null || !modPath.exists()) {
-      log.error("{} unable to find valid mod path: {}", LOG_PREFIX, modPath);
+      Constants.LOG.error("{} unable to find valid mod path: {}", LOG_PREFIX, modPath);
       return result;
     }
     File[] modsFiles = modPath.listFiles();
@@ -49,17 +46,19 @@ public class ClientSideModsUtils {
                     .getAbsoluteFile()
                     .toString()
                     .replace(".jar" + CLIENT_MOD_EXTENSION, ".jar"));
-        log.info("{} ✔ Try to enable client side mod {} ...", LOG_PREFIX, modFileName);
+        Constants.LOG.info("{} ✔ Try to enable client side mod {} ...", LOG_PREFIX, modFileName);
         if (clientFile.exists()) {
           if (!ModFileUtils.deleteModFile(modFile)) {
-            log.error(
+            Constants.LOG.error(
                 "{} ⚠ Was unable to remove duplicated client side mod {}!", LOG_PREFIX, modFile);
           } else {
+            Constants.LOG.info("{} ✔ Removed duplicated client side mod {}!", LOG_PREFIX, modFile);
             result++;
           }
         } else if (!modFile.renameTo(clientFile)) {
-          log.error("{} ⚠ Was unable to enable client side mod {}!", LOG_PREFIX, modFile);
+          Constants.LOG.error("{} ⚠ Was unable to enable client side mod {}!", LOG_PREFIX, modFile);
         } else {
+          Constants.LOG.info("{} ✔ Enabled client side mod {}!", LOG_PREFIX, modFileName);
           result++;
         }
       }
@@ -73,26 +72,39 @@ public class ClientSideModsUtils {
       return result;
     }
     for (ModFileData modFileData : modFiles) {
-      if (modFileData.environment() == ModFileData.ModEnvironment.CLIENT
-          && modFileData.path().endsWith(".jar")) {
+      if (modFileData.environment() == ModFileData.ModEnvironment.CLIENT) {
         File modFile = modFileData.path().toFile();
         File clientFile = new File(modFile.getAbsoluteFile() + CLIENT_MOD_EXTENSION);
-        log.info("{} X Try to disable client side mod {} ...", LOG_PREFIX, modFileData.id());
+        Constants.LOG.info(
+            "{} ❌ Try to disable client side mod {} ...", LOG_PREFIX, modFileData.id());
         if (clientFile.exists()) {
           if (!ModFileUtils.deleteModFile(clientFile)) {
-            log.error(
+            Constants.LOG.error(
                 "{} ⚠ Was unable to remove client side mod {} with {}!",
                 LOG_PREFIX,
                 modFileData.id(),
                 clientFile);
           } else {
+            Constants.LOG.info(
+                "{} ✔ Removed duplicated client side mod {} with {}!",
+                LOG_PREFIX,
+                modFileData.id(),
+                clientFile);
             result++;
           }
         } else if (!modFile.renameTo(clientFile)) {
-          log.error("{} ⚠ Was unable to disable client side mod {}!", LOG_PREFIX, modFile);
+          Constants.LOG.error(
+              "{} ⚠ Was unable to disable client side mod {}!", LOG_PREFIX, modFile);
         } else {
+          Constants.LOG.info("{} ✔ Disabled client side mod {}!", LOG_PREFIX, modFileData.id());
           result++;
         }
+      } else {
+        Constants.LOG.info(
+            "{} ❌ Skip wrongly client side mod {} with {}!",
+            LOG_PREFIX,
+            modFileData.id(),
+            modFileData.environment());
       }
     }
     return result;

@@ -27,10 +27,17 @@ public class ServerModsDatabase {
   /** List of client side mods, which are confirmed to be client-side only! */
   private static final List<String> clientSideModsList =
       Arrays.asList(
-          // @formatter:off
-          "server_side_mod_id"
-          // @formatter:on
-          );
+          "adaptive_performance_tweaks",
+          "adaptive_performance_tweaks_core",
+          "adaptive_performance_tweaks_gamerules",
+          "adaptive_performance_tweaks_items",
+          "adaptive_performance_tweaks_player",
+          "adaptive_performance_tweaks_spawn",
+          "alternate-current",
+          "discordsrv",
+          "e4mc",
+          "publicguiannouncement",
+          "villagerdeathmessages");
 
   protected ServerModsDatabase() {}
 

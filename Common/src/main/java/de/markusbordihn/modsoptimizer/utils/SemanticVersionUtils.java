@@ -25,9 +25,17 @@ import java.util.regex.Pattern;
 public class SemanticVersionUtils {
 
   public static final Version EMPTY_VERSION = Version.valueOf("0.0.0");
-  public static final Pattern UNNECESSARY_VERSION_PARTS_PATTERN =
-      Pattern.compile("[+-_]?(mc|minecraft)[1,2]{1,2}\\.\\d{1,2}\\.?[0-9x]?");
+  public static final Pattern MC_NAME_VERSION_PATTERN =
+      Pattern.compile("[+_-]?(mc|minecraft)[1,2]{1,2}\\.\\d{1,2}\\.?[0-9x]?");
+  public static final Pattern FORGE_VERSION_PATTERN = Pattern.compile("[+_-]?(forge)[+_-]?");
+  public static final Pattern BUILD_VERSION_PATTERN = Pattern.compile("[_.-]?(build)[_.-]?");
   public static final Pattern LEADING_ZEROS_PATTERN = Pattern.compile("\\.0+\\d");
+  public static final Pattern RELEASE_VERSION_PATTERN = Pattern.compile("[+_-]?(release)[+_-]?");
+  public static final Pattern SNAPSHOT_VERSION_PATTERN = Pattern.compile("[+_-]?(snapshot)[+_-]?");
+  public static final Pattern VERSION_CLEANUP_DOUBLE_PATTERN =
+      Pattern.compile("([._+\\-\\s])[._+\\-\\s]");
+  public static final Pattern VERSION_CLEANUP_START_PATTERN = Pattern.compile("(^[._+\\-\\s])");
+  public static final Pattern VERSION_CLEANUP_END_PATTERN = Pattern.compile("([._+\\-\\s])$");
   public static final Pattern VERSION_PATTERN_1 = Pattern.compile("^\\d+$");
   public static final Pattern VERSION_PATTERN_2 = Pattern.compile("^\\d+\\.\\d+$");
   public static final Pattern VERSION_PATTERN_3 =
@@ -70,10 +78,12 @@ public class SemanticVersionUtils {
     return defaultVersion;
   }
 
-  private static String normalizeVersion(String version) {
+  public static String normalizeVersion(String version) {
     if (version == null || version.isEmpty()) {
       return "";
     }
+    // Make sure that version is lower case.
+    version = version.toLowerCase();
 
     // Clean up version string.
     version = removeUnnecessaryVersionParts(version);
@@ -126,15 +136,30 @@ public class SemanticVersionUtils {
     if (version == null || version.isEmpty()) {
       return "";
     }
-    if (version.contains("forge")) {
-      version = version.substring(0, version.indexOf("forge"));
+    if (version.startsWith(Constants.MINECRAFT_VERSION)) {
+      version = version.substring(Constants.MINECRAFT_VERSION.length());
     }
-    if (version.contains("-SNAPSHOT-")) {
-      version = version.replace("-SNAPSHOT-", "-");
+    if (MC_NAME_VERSION_PATTERN.matcher(version).find()) {
+      version = version.replaceAll(MC_NAME_VERSION_PATTERN.pattern(), "");
     }
-    if (UNNECESSARY_VERSION_PARTS_PATTERN.matcher(version).find()) {
-      return version.replaceAll(UNNECESSARY_VERSION_PARTS_PATTERN.pattern(), "");
+    if (FORGE_VERSION_PATTERN.matcher(version).find()) {
+      version = version.replaceAll(FORGE_VERSION_PATTERN.pattern(), "");
     }
+    if (BUILD_VERSION_PATTERN.matcher(version).find()) {
+      version = version.replaceAll(BUILD_VERSION_PATTERN.pattern(), "-");
+    }
+    if (RELEASE_VERSION_PATTERN.matcher(version).find()) {
+      version = version.replaceAll(RELEASE_VERSION_PATTERN.pattern(), "");
+    }
+    if (SNAPSHOT_VERSION_PATTERN.matcher(version).find()) {
+      version = version.replaceAll(SNAPSHOT_VERSION_PATTERN.pattern(), "-");
+    }
+
+    // Remove double dashes, dots, underscores and spaces with a single version.
+    version = version.replaceAll(VERSION_CLEANUP_START_PATTERN.pattern(), "");
+    version = version.replaceAll(VERSION_CLEANUP_END_PATTERN.pattern(), "");
+    version = version.replaceAll(VERSION_CLEANUP_DOUBLE_PATTERN.pattern(), "$1");
+
     return version;
   }
 

@@ -24,6 +24,7 @@ import de.markusbordihn.modsoptimizer.config.ModsDatabaseConfig;
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModEnvironment;
 import java.io.File;
 import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,6 +36,9 @@ public class ModData {
 
   private static final String LOG_PREFIX = "[Mod Data]";
   private static final String FILE_EXTENSION = ".jar";
+
+  private static final String OVERVIEW_SEPARATOR =
+      "--------------------------------------------------------------------------------------------------------";
 
   private static final Map<String, Set<ModFileData>> duplicatedModsMap = new HashMap<>();
   private static final Map<String, ModFileData> knownModsMap = new HashMap<>();
@@ -104,6 +108,7 @@ public class ModData {
     }
 
     showStats();
+    showOverview();
   }
 
   private static void showStats() {
@@ -135,6 +140,29 @@ public class ModData {
           defaultModsSet.size(),
           knownModsMap.size());
     }
+  }
+
+  private static void showOverview() {
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    String overviewHeader =
+        String.format(
+            "| %-32s | %-22s | %-8s | %-7s | %-19s |",
+            "ID", "VERSION", "TYPE", "ENVIRONMENT", "TIMESTAMP");
+    Constants.LOG.info(OVERVIEW_SEPARATOR);
+    Constants.LOG.info(overviewHeader);
+    Constants.LOG.info(OVERVIEW_SEPARATOR);
+    for (ModFileData modFileData : knownModsMap.values()) {
+      String modEntry =
+          String.format(
+              "| %-32s | %-22s | %-8s | %-7s | %-19s |",
+              modFileData.id(),
+              modFileData.version(),
+              modFileData.modType(),
+              modFileData.environment(),
+              modFileData.timestamp().format(dateTimeFormatter));
+      Constants.LOG.info(modEntry);
+    }
+    Constants.LOG.info(OVERVIEW_SEPARATOR);
   }
 
   public static ModFileData readModInfo(File modFile) {
@@ -184,7 +212,7 @@ public class ModData {
               "{} Overwrite mod environment for {} from {} to {}",
               LOG_PREFIX,
               modFileData.id(),
-              modFileData.modType(),
+              modFileData.environment(),
               modEnvironment);
           modFileData =
               new ModFileData(
@@ -199,7 +227,9 @@ public class ModData {
       }
 
       // Debug output
-      Constants.LOG.info("{} {}", LOG_PREFIX, modFileData);
+      if (ModsDatabaseConfig.isDebugEnabled()) {
+        Constants.LOG.info("{} {}", LOG_PREFIX, modFileData);
+      }
 
       return modFileData;
     } catch (Exception e) {
