@@ -42,3 +42,4 @@ logs
 *.log
 *.patch.txt
 *.stackdump
+/Common/config/
