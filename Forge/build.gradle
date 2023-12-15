@@ -72,7 +72,6 @@ minecraft {
 
 sourceSets.main.resources.srcDir 'src/generated/resources'
 
-
 // Curse Maven Plugin
 repositories {
   maven {
