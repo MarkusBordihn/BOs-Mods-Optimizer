@@ -5,6 +5,13 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v1.2.0
+
+- Added support for library mods and language provider mods.
+- Added fallback mod id detection for mods without `mods.toml` or `fabric.mod.json` files.
+- Improved Mod Type detection.
+- Smaller code optimizations and improvements.
+
 ### v1.1.0
 
 - Added mods reader for `mods.toml` files.
