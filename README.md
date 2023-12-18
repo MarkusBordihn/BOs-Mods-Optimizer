@@ -36,6 +36,7 @@ https://www.curseforge.com/minecraft/modpacks/bos-adventure-world
 
 ## ℹ️ More Information
 
-Please take a look at our wiki https://github.com/MarkusBordihn/BOs-Mods-Optimizer/wiki for additional information.
+Please take a look at our wiki https://github.com/MarkusBordihn/BOs-Mods-Optimizer/wiki for
+additional information.
 
 [logo]: Common/src/main/resources/logo.png

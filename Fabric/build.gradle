@@ -69,7 +69,7 @@ publishing {
 curseforge {
   apiKey = "${credentials.forKey('curseforge_api_token')}"
   project {
-    id = "${credentials.forKey('modrinth_api_token')}"
+    id = "${curseforge_project_id}"
     changelog = file("../CHANGELOG.md")
     changelogType = 'markdown'
     releaseType = "${project.curseforge_release_type}"
