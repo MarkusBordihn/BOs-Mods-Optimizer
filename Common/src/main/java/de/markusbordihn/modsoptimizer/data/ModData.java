@@ -44,7 +44,9 @@ public class ModData {
   private static final Map<String, ModFileData> knownModsMap = new HashMap<>();
   private static final Set<ModFileData> clientModsSet = new HashSet<>();
   private static final Set<ModFileData> serverModsSet = new HashSet<>();
+  private static final Set<ModFileData> libraryModsSet = new HashSet<>();
   private static final Set<ModFileData> defaultModsSet = new HashSet<>();
+  private static final Set<ModFileData> languageProviderModsSet = new HashSet<>();
 
   protected ModData() {}
 
@@ -100,6 +102,10 @@ public class ModData {
             clientModsSet.add(modFileData);
           } else if (modFileData.environment() == ModEnvironment.SERVER) {
             serverModsSet.add(modFileData);
+          } else if (modFileData.environment() == ModEnvironment.LIBRARY) {
+            libraryModsSet.add(modFileData);
+          } else if (modFileData.environment() == ModEnvironment.LANGUAGE_PROVIDER) {
+            languageProviderModsSet.add(modFileData);
           } else {
             defaultModsSet.add(modFileData);
           }
@@ -114,28 +120,42 @@ public class ModData {
   private static void showStats() {
     if (!duplicatedModsMap.isEmpty()) {
       Constants.LOG.info(
-          "{} ⚠ Found {} duplicated mods in {} mod files.",
+          "{} ⚠ Found {} duplicated mods in {} mods.",
           LOG_PREFIX,
           duplicatedModsMap.size(),
           knownModsMap.size());
     }
+    if (!languageProviderModsSet.isEmpty()) {
+      Constants.LOG.info(
+          "{} Found {} language provider mods in {} mods.",
+          LOG_PREFIX,
+          languageProviderModsSet.size(),
+          knownModsMap.size());
+    }
+    if (!libraryModsSet.isEmpty()) {
+      Constants.LOG.info(
+          "{} Found {} library mods in {} mods.",
+          LOG_PREFIX,
+          libraryModsSet.size(),
+          knownModsMap.size());
+    }
     if (!clientModsSet.isEmpty()) {
       Constants.LOG.info(
-          "{} Found {} client mods in {} mod files.",
+          "{} Found {} client mods in {} mods.",
           LOG_PREFIX,
           clientModsSet.size(),
           knownModsMap.size());
     }
     if (!serverModsSet.isEmpty()) {
       Constants.LOG.info(
-          "{} Found {} server mods in {} mod files.",
+          "{} Found {} server mods in {} mods.",
           LOG_PREFIX,
           serverModsSet.size(),
           knownModsMap.size());
     }
     if (!defaultModsSet.isEmpty()) {
       Constants.LOG.info(
-          "{} Found {} default mods in {} mod files.",
+          "{} Found {} default mods in {} mods.",
           LOG_PREFIX,
           defaultModsSet.size(),
           knownModsMap.size());
@@ -165,6 +185,10 @@ public class ModData {
     Constants.LOG.info(OVERVIEW_SEPARATOR);
   }
 
+  public static ModFileData readModInfo(File parent, String modFile) {
+    return readModInfo(new File(parent, modFile));
+  }
+
   public static ModFileData readModInfo(File modFile) {
     if (modFile == null || !modFile.exists()) {
       return null;
@@ -178,14 +202,6 @@ public class ModData {
 
   public static Set<ModFileData> getClientMods() {
     return new HashSet<>(clientModsSet);
-  }
-
-  public static Set<ModFileData> getServerMods() {
-    return new HashSet<>(serverModsSet);
-  }
-
-  public static Set<ModFileData> getDefaultMods() {
-    return new HashSet<>(defaultModsSet);
   }
 
   public static Map<String, Set<ModFileData>> getDuplicatedMods() {
