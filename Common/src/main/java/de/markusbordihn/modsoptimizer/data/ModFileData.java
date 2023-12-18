@@ -36,6 +36,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -57,6 +58,12 @@ public record ModFileData(
   public static final String EMPTY_MOD_ID = "unknown_id";
   public static final String EMPTY_MOD_NAME = "Unknown";
   public static final LocalDateTime EMPTY_TIMESTAMP = LocalDateTime.now();
+  public static final String MANIFEST_AUTOMATIC_MODULE_NAME = "Automatic-Module-Name";
+  public static final String MANIFEST_IMPLEMENTATION_VERSION = "Implementation-Version";
+  public static final String MANIFEST_IMPLEMENTATION_TIMESTAMP = "Implementation-Timestamp";
+  public static final String MANIFEST_IMPLEMENTATION_TITLE = "Implementation-Title";
+  public static final String MANIFEST_SPECIFICATION_TITLE = "Specification-Title";
+  public static final String MANIFEST_FML_MOD_TYPE = "FMLModType";
 
   public static ModFileData parseModFile(Manifest manifest, Path path, JarFile jarFile) {
     ModType modType = getModTypeByFile(manifest, jarFile);
@@ -102,13 +109,15 @@ public record ModFileData(
     if (modsFile != null && !modsFile.isDirectory()) {
       try (InputStream inputStream = jarFile.getInputStream(modsFile)) {
         Toml modsToml = new Toml().read(inputStream);
-        modId = modsToml.getString("mods[0].modId");
-        name = modsToml.getString("mods[0].displayName");
+        String modsPrefix = "mods[0].";
+        String modsVersionId = modsPrefix + "version";
+        modId = modsToml.getString(modsPrefix + "modId");
+        name = modsToml.getString(modsPrefix + "displayName");
 
         // Parse version number.
-        if (modsToml.getString("mods[0].version") != null
-            && !modsToml.getString("mods[0].version").startsWith("${")) {
-          version = SemanticVersionUtils.parseVersion(modsToml.getString("mods[0].version"));
+        if (modsToml.getString(modsVersionId) != null
+            && !modsToml.getString(modsVersionId).startsWith("${")) {
+          version = SemanticVersionUtils.parseVersion(modsToml.getString(modsVersionId));
         } else if (modsToml.getString("version") != null
             && !modsToml.getString("version").startsWith("${")) {
           Constants.LOG.warn(
@@ -118,7 +127,7 @@ public record ModFileData(
         }
 
         // Iterate over all dependencies (max. 10) and check the required side for "forge" or
-        // "neoforge".
+        // "neoforge", we don't care about other dependencies yet.
         for (int i = 0; i < 10; i++) {
           String dependencyId = "dependencies." + modId + "[" + i + "]";
           try {
@@ -170,18 +179,64 @@ public record ModFileData(
     // Add manifest information, if available.
     if (manifest != null && manifest.getMainAttributes() != null) {
       Attributes attributes = manifest.getMainAttributes();
-      if (version == null || version.equals(EMPTY_VERSION)) {
-        version = SemanticVersionUtils.parseVersion(attributes.getValue("Implementation-Version"));
+
+      // Get mod version from manifest, if available.
+      if (version == null
+          || version.equals(EMPTY_VERSION)
+              && hasAttributeValue(MANIFEST_IMPLEMENTATION_VERSION, attributes)) {
+        version =
+            SemanticVersionUtils.parseVersion(attributes.getValue(MANIFEST_IMPLEMENTATION_VERSION));
       }
-      if (name == null || name.equals("${file.jarName}")) {
-        name = attributes.getValue("Specification-Title");
+
+      // Get mod name from manifest, if available.
+      if (name == null
+          || name.equals("${file.jarName}")
+              && hasAttributeValue(MANIFEST_SPECIFICATION_TITLE, attributes)) {
+        name = attributes.getValue(MANIFEST_SPECIFICATION_TITLE);
       }
-      timestamp = parseTimestamp(attributes.getValue("Implementation-Timestamp"));
+
+      // Get mod id from manifest, if available.
+      if (modId == null || modId.isEmpty() || modId.equals(EMPTY_MOD_ID)) {
+        if (hasAttributeValue(MANIFEST_AUTOMATIC_MODULE_NAME, attributes)) {
+          modId =
+              attributes.getValue(MANIFEST_AUTOMATIC_MODULE_NAME).replace(" ", "-").toLowerCase();
+        } else if (hasAttributeValue(MANIFEST_IMPLEMENTATION_TITLE, attributes)) {
+          modId =
+              attributes.getValue(MANIFEST_IMPLEMENTATION_TITLE).replace(" ", "-").toLowerCase();
+        }
+      }
+
+      // Get fml mod type, if available.
+      if (hasAttributeValue(MANIFEST_FML_MOD_TYPE, attributes)) {
+        String fmlModType = attributes.getValue(MANIFEST_FML_MOD_TYPE);
+        switch (fmlModType) {
+          case "LIBRARY", "GAMELIBRARY" -> environment = ModEnvironment.LIBRARY;
+          case "LANGPROVIDER" -> environment = ModEnvironment.LANGUAGE_PROVIDER;
+          case "MOD" -> {
+            // Ignore MOD, because we already have a default environment.
+          }
+          default -> Constants.LOG.warn(
+              "⚠ Found unknown fml mod type {} for {}!", fmlModType, path);
+        }
+      }
+      timestamp = parseTimestamp(attributes.getValue(MANIFEST_IMPLEMENTATION_TIMESTAMP));
     }
 
     // Confirm that we have a valid timestamp
     if (timestamp == null || timestamp.equals(EMPTY_TIMESTAMP)) {
       timestamp = parseTimestampFromPath(path);
+    }
+
+    // Confirm that we have a valid mod id
+    if (modId == null || modId.isEmpty() || modId.equals(EMPTY_MOD_ID)) {
+      if (environment == ModEnvironment.LIBRARY) {
+        modId = "library-" + UUID.randomUUID().toString();
+      } else if (environment == ModEnvironment.LANGUAGE_PROVIDER) {
+        modId = "language-provider-" + UUID.randomUUID().toString();
+      } else {
+        Constants.LOG.error("⚠ Found no valid modId for {}!", path);
+        modId = "unknown-" + UUID.randomUUID().toString();
+      }
     }
 
     return new ModFileData(path, modId, ModType.FORGE, name, version, environment, timestamp);
@@ -255,13 +310,18 @@ public record ModFileData(
     // Add manifest information, if available.
     if (manifest != null && manifest.getMainAttributes() != null) {
       Attributes attributes = manifest.getMainAttributes();
-      if (version == null || version.equals(EMPTY_VERSION)) {
-        version = SemanticVersionUtils.parseVersion(attributes.getValue("Implementation-Version"));
+      if (version == null
+          || version.equals(EMPTY_VERSION)
+              && hasAttributeValue(MANIFEST_IMPLEMENTATION_VERSION, attributes)) {
+        version =
+            SemanticVersionUtils.parseVersion(attributes.getValue(MANIFEST_IMPLEMENTATION_VERSION));
       }
-      if (name == null || name.equals("${file.jarName}")) {
-        name = attributes.getValue("Specification-Title");
+      if (name == null
+          || name.equals("${file.jarName}")
+              && hasAttributeValue(MANIFEST_SPECIFICATION_TITLE, attributes)) {
+        name = attributes.getValue(MANIFEST_SPECIFICATION_TITLE);
       }
-      timestamp = parseTimestamp(attributes.getValue("Implementation-Timestamp"));
+      timestamp = parseTimestamp(attributes.getValue(MANIFEST_IMPLEMENTATION_TIMESTAMP));
     }
 
     // Confirm that we have a valid timestamp
@@ -285,9 +345,11 @@ public record ModFileData(
         || (mainAttributes.getValue("Fabric-Loader-Version") != null
             && !mainAttributes.getValue("Fabric-Loader-Version").isEmpty())) {
       return ModType.FABRIC;
-    } else if (mainAttributes.getValue("Implementation-Title") != null
-        && mainAttributes.getValue("Implementation-Title").equals("NeoForge")) {
+    } else if (hasAttributeValue(MANIFEST_IMPLEMENTATION_TITLE, mainAttributes)
+        && mainAttributes.getValue(MANIFEST_IMPLEMENTATION_TITLE).equals("NeoForge")) {
       return ModType.NEOFORGE;
+    } else if (hasAttributeValue(MANIFEST_FML_MOD_TYPE, mainAttributes)) {
+      return ModType.FORGE;
     }
 
     // File name based check.
@@ -310,8 +372,14 @@ public record ModFileData(
     }
 
     // Unknown mod type
-    Constants.LOG.warn("⚠ Unable to detect mod type for {}", jarFile.getName());
+    Constants.LOG.warn(
+        "⚠ Unable to detect mod type for {} with manifest {}", jarFile.getName(), mainAttributes);
     return ModType.UNKNOWN;
+  }
+
+  public static boolean hasAttributeValue(String name, Attributes attributes) {
+    String value = attributes.getValue(name);
+    return value != null && !value.isEmpty();
   }
 
   public enum ModType {
@@ -325,6 +393,8 @@ public record ModFileData(
     DEFAULT,
     CLIENT,
     SERVER,
+    LIBRARY,
+    LANGUAGE_PROVIDER,
     UNKNOWN
   }
 }
