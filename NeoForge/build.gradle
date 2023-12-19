@@ -42,13 +42,29 @@ runs {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
+// Curse Maven Plugin
+repositories {
+  maven {
+    url "https://www.cursemaven.com"
+    content {
+      includeGroup "curse.maven"
+    }
+  }
+  mavenLocal()
+}
+
+configurations {
+  shade
+  implementation.extendsFrom shade
+}
+
 dependencies {
   implementation "net.neoforged:neoforge:${neoforge_version}"
   compileOnly project(":Common")
 
   // Extra libraries
-  implementation 'com.moandjiezana.toml:toml4j:0.7.2'
-  implementation 'com.github.zafarkhaja:java-semver:0.9.0'
+  shade 'com.moandjiezana.toml:toml4j:0.7.2'
+  shade 'com.github.zafarkhaja:java-semver:0.9.0'
 }
 
 // NeoGradle compiles the game, but we don't want to add our common code to the game's code
@@ -70,17 +86,33 @@ tasks.withType(ProcessResources).matching(notNeoTask).configureEach {
   from project(":Common").sourceSets.main.resources
 }
 
+jar {
+  archiveClassifier = 'slim'
+  manifest {
+    attributes([
+        "FMLModType"              : "LIBRARY",
+        "Specification-Title"     : "${project.mod_name}",
+        "Specification-Vendor"    : "${project.vendor_name}",
+        "Specification-Version"   : "1",
+        "Implementation-Title"    : project.name,
+        "Implementation-Version"  : "${project.version}",
+        "Implementation-Vendor"   : "${project.mod_id}",
+        "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+    ])
+  }
+  finalizedBy shadowJar
+}
+
 shadowJar {
+  archiveClassifier = ''
+  configurations = [project.configurations.shade]
+  relocate 'com.moandjiezana.toml', "${project.group}.thirdparty.toml4j"
+  relocate 'com.github.zafarkhaja', "${project.group}.thirdparty.semver"
   dependencies {
     include(dependency('com.moandjiezana.toml:toml4j:.*'))
     include(dependency('com.github.zafarkhaja:java-semver:.*'))
   }
   minimize()
-}
-
-jar {
-  finalizedBy shadowJar
-  archiveClassifier = "plain"
 }
 
 assemble.dependsOn shadowJar
