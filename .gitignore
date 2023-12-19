@@ -43,3 +43,4 @@ logs
 *.patch.txt
 *.stackdump
 /Common/config/
+/NeoForge/runs/
