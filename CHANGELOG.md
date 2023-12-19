@@ -5,6 +5,10 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v1.3.0
+
+- Fixed Jar in Jar conflict with mods which are using the same package names.
+
 ### v1.2.0
 
 - Added support for library mods and language provider mods.
