@@ -17,24 +17,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package de.markusbordihn.modsoptimizer;
+package de.markusbordihn.modsoptimizer.config;
 
-import net.minecraftforge.fml.IExtensionPoint;
-import net.minecraftforge.fml.IExtensionPoint.DisplayTest;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
+import java.util.Arrays;
+import java.util.List;
 
-@Mod(Constants.MOD_ID)
-public class ModsOptimizer {
+public class DefaultModsDatabase {
 
-  public ModsOptimizer() {
-    // Make sure the mod being absent on the other network side does not cause the client to display
-    // the server as incompatible
-    ModLoadingContext.get()
-        .registerExtensionPoint(
-            IExtensionPoint.DisplayTest.class,
-            () ->
-                new IExtensionPoint.DisplayTest(
-                    () -> DisplayTest.IGNORESERVERONLY, (a, b) -> true));
+  /** List of mods, which are needed on both sides! */
+  private static final List<String> defaultSideModsList = Arrays.asList("attributefix");
+
+  protected DefaultModsDatabase() {}
+
+  public static List<String> getDefaultModsList() {
+    return defaultSideModsList;
   }
 }

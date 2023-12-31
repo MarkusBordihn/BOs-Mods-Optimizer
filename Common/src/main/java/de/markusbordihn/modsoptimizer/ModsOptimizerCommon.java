@@ -22,6 +22,4 @@ package de.markusbordihn.modsoptimizer;
 public class ModsOptimizerCommon {
 
   protected ModsOptimizerCommon() {}
-
-  public static void init() {}
 }

@@ -5,6 +5,13 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v1.4.0
+
+- Added support for mixed mods and data pack mods.
+- Added additional documentation for the config.toml configuration file.
+- Reduced the numbers of log messages for non-debug mode.
+- Improved error messages.
+
 ### v1.3.0
 
 - Fixed Jar in Jar conflict with mods which are using the same package names.

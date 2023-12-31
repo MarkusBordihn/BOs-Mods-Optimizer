@@ -37,6 +37,10 @@ public class ClientSideModsUtils {
       return result;
     }
     File[] modsFiles = modPath.listFiles();
+    if (modsFiles == null || modsFiles.length == 0) {
+      Constants.LOG.error("{} unable to find valid mod files in path: {}", LOG_PREFIX, modPath);
+      return result;
+    }
     for (File modFile : modsFiles) {
       String modFileName = modFile.getName();
       if (modFileName.endsWith(CLIENT_MOD_EXTENSION)) {
