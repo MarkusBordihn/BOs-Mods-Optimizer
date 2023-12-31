@@ -39,6 +39,9 @@ class ModDataTests {
   private final File testModBothSampleFiles =
       new File("src/test/resources/testfile/mods_sample/both");
 
+  private final File testModDatapackSampleFiles =
+      new File("src/test/resources/testfile/mods_sample/datapack");
+
   @Test
   void testModPathExists() {
     System.out.printf("Test Mod Files: %s\n", testModFiles);
@@ -98,6 +101,11 @@ class ModDataTests {
         ModData.readModInfo(testModBothSampleFiles, "awesomedungeon-2.0.11.jar");
     assertEquals(ModType.FORGE, sampleModFileData02.modType());
     assertEquals(ModEnvironment.DEFAULT, sampleModFileData02.environment());
+
+    ModFileData sampleModFileData03 =
+        ModData.readModInfo(testModBothSampleFiles, "AttributeFix-Forge-1.18.2-14.0.2.jar");
+    assertEquals(ModType.FORGE, sampleModFileData03.modType());
+    assertEquals(ModEnvironment.DEFAULT, sampleModFileData03.environment());
   }
 
   @Test
@@ -181,5 +189,14 @@ class ModDataTests {
     assertEquals(ModType.FABRIC, sampleModFileData02.modType());
     assertEquals(ModEnvironment.CLIENT, sampleModFileData02.environment());
     assertEquals("skinlayers", sampleModFileData02.id());
+  }
+
+  @Test
+  void testReadModInfo_Datapack_Samples() {
+    ModFileData sampleModFileData01 =
+        ModData.readModInfo(testModDatapackSampleFiles, "explorify-v1.3.0-mc1.20.jar");
+    assertEquals(ModType.MIXED, sampleModFileData01.modType());
+    assertEquals(ModEnvironment.DATA_PACK, sampleModFileData01.environment());
+    assertEquals("explorify", sampleModFileData01.id());
   }
 }
