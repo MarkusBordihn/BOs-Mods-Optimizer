@@ -24,8 +24,8 @@ import java.util.List;
 
 public class ServerModsDatabase {
 
-  /** List of client side mods, which are confirmed to be client-side only! */
-  private static final List<String> clientSideModsList =
+  /** List of server side mods, which are confirmed to be server-side only! */
+  private static final List<String> serverSideModsList =
       Arrays.asList(
           "adaptive_performance_tweaks",
           "adaptive_performance_tweaks_core",
@@ -42,6 +42,6 @@ public class ServerModsDatabase {
   protected ServerModsDatabase() {}
 
   public static List<String> getServerSideModsList() {
-    return clientSideModsList;
+    return serverSideModsList;
   }
 }
