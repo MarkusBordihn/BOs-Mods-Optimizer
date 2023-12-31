@@ -27,6 +27,7 @@ import de.markusbordihn.modsoptimizer.config.ModsDatabaseConfig;
 import de.markusbordihn.modsoptimizer.data.ModData;
 import de.markusbordihn.modsoptimizer.utils.ClientSideModsUtils;
 import de.markusbordihn.modsoptimizer.utils.DuplicatedModsUtils;
+import de.markusbordihn.modsoptimizer.utils.SemanticVersionUtils;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -55,6 +56,7 @@ public class ModLocatorService implements IModLocator {
     boolean isClient = true;
     if (ModsDatabaseConfig.isDebugEnabled()) {
       Constants.LOG.warn("⚠ Debug mode is enabled!");
+      SemanticVersionUtils.enableDebug();
     }
     if (ModsDatabaseConfig.isDebugEnabled()
         && !Objects.equals(ModsDatabaseConfig.getDebugForceSide(), "default")) {

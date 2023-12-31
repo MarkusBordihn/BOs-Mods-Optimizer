@@ -49,8 +49,17 @@ public class SemanticVersionUtils {
       Pattern.compile("^\\d+\\.\\d+(\\.\\d+)?-\\d+\\.\\d+\\.\\d+$");
   public static final Pattern VERSION_PATTERN_8 = Pattern.compile("^\\d+\\.\\d+-\\d+$");
   public static final Pattern VERSION_PATTERN_9 = Pattern.compile("^\\d+\\.\\d+\\.[a-z]+$");
+  private static boolean debugEnabled = false;
 
   protected SemanticVersionUtils() {}
+
+  public static void enableDebug() {
+    debugEnabled = true;
+  }
+
+  public static void disableDebug() {
+    debugEnabled = false;
+  }
 
   public static Version parseVersion(String version) {
     return parseVersion(version, EMPTY_VERSION);
@@ -61,8 +70,10 @@ public class SemanticVersionUtils {
       try {
         return Version.valueOf(versionNumber);
       } catch (Exception e) {
-        Constants.LOG.debug(
-            "No valid semantic version {}, will try to normalize version.", versionNumber);
+        if (debugEnabled) {
+          Constants.LOG.debug(
+              "No valid semantic version {}, will try to normalize version.", versionNumber);
+        }
       }
     }
 
@@ -71,8 +82,13 @@ public class SemanticVersionUtils {
     try {
       return Version.valueOf(normalizedVersion);
     } catch (Exception e) {
-      Constants.LOG.error(
-          "Unable to parse version {} or {}, because of: {}", versionNumber, normalizedVersion, e);
+      if (debugEnabled) {
+        Constants.LOG.error(
+            "Unable to parse version {} or {}, because of: {}",
+            versionNumber,
+            normalizedVersion,
+            e);
+      }
     }
 
     return defaultVersion;
