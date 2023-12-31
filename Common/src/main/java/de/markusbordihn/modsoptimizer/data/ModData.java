@@ -37,12 +37,12 @@ public class ModData {
   private static final String LOG_PREFIX = "[Mod Data]";
   private static final String FILE_EXTENSION = ".jar";
 
-  private static final String OVERVIEW_SEPARATOR =
-      "--------------------------------------------------------------------------------------------------------";
+  private static final String OVERVIEW_SEPARATOR = "-".repeat(115);
 
   private static final Map<String, Set<ModFileData>> duplicatedModsMap = new HashMap<>();
   private static final Map<String, ModFileData> knownModsMap = new HashMap<>();
   private static final Set<ModFileData> clientModsSet = new HashSet<>();
+  private static final Set<ModFileData> dataPackModsSet = new HashSet<>();
   private static final Set<ModFileData> serverModsSet = new HashSet<>();
   private static final Set<ModFileData> libraryModsSet = new HashSet<>();
   private static final Set<ModFileData> defaultModsSet = new HashSet<>();
@@ -106,6 +106,8 @@ public class ModData {
             libraryModsSet.add(modFileData);
           } else if (modFileData.environment() == ModEnvironment.LANGUAGE_PROVIDER) {
             languageProviderModsSet.add(modFileData);
+          } else if (modFileData.environment() == ModEnvironment.DATA_PACK) {
+            dataPackModsSet.add(modFileData);
           } else {
             defaultModsSet.add(modFileData);
           }
@@ -139,6 +141,13 @@ public class ModData {
           libraryModsSet.size(),
           knownModsMap.size());
     }
+    if (!dataPackModsSet.isEmpty()) {
+      Constants.LOG.info(
+          "{} Found {} data pack mods in {} mods.",
+          LOG_PREFIX,
+          dataPackModsSet.size(),
+          knownModsMap.size());
+    }
     if (!clientModsSet.isEmpty()) {
       Constants.LOG.info(
           "{} Found {} client mods in {} mods.",
@@ -166,7 +175,7 @@ public class ModData {
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     String overviewHeader =
         String.format(
-            "| %-32s | %-22s | %-8s | %-7s | %-19s |",
+            "| %-34s | %-22s | %-8s | %-17s | %-19s |",
             "ID", "VERSION", "TYPE", "ENVIRONMENT", "TIMESTAMP");
     Constants.LOG.info(OVERVIEW_SEPARATOR);
     Constants.LOG.info(overviewHeader);
@@ -174,7 +183,7 @@ public class ModData {
     for (ModFileData modFileData : knownModsMap.values()) {
       String modEntry =
           String.format(
-              "| %-32s | %-22s | %-8s | %-7s | %-19s |",
+              "| %-34s | %-22s | %-8s | %-17s | %-19s |",
               modFileData.id(),
               modFileData.version(),
               modFileData.modType(),
@@ -213,8 +222,7 @@ public class ModData {
       // Read manifest
       Manifest manifest = jarFile.getManifest();
       if (manifest == null) {
-        Constants.LOG.error("{} ⚠ Unable to read manifest from mod file {}", LOG_PREFIX, modFile);
-        return null;
+        Constants.LOG.warn("{} ⚠ Unable to read manifest from mod file {}", LOG_PREFIX, modFile);
       }
 
       // Parse mod file data
