@@ -33,6 +33,8 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import org.jetbrains.annotations.NotNull;
 
 public class ModsDatabaseConfig {
 
@@ -41,8 +43,8 @@ public class ModsDatabaseConfig {
 
   public static final String DEBUG_ENABLED = "debugEnabled";
   public static final String DEBUG_FORCE_SIDE = "debugForceSide";
+  public static final String CONFIG_FILE_NAME = "config.toml";
   private static final Map<String, String> modsMap = new HashMap<>();
-
   private static boolean debugEnabled = false;
   private static String debugForceSide = "default";
 
@@ -60,7 +62,7 @@ public class ModsDatabaseConfig {
   protected ModsDatabaseConfig() {}
 
   public static String getConfigFileName() {
-    return "config.toml";
+    return CONFIG_FILE_NAME;
   }
 
   public static Map<String, String> getConfig() {
@@ -111,6 +113,9 @@ public class ModsDatabaseConfig {
         for (Map.Entry<String, String> entry : mods.entrySet()) {
           String modId = entry.getKey();
           String modType = entry.getValue();
+          if (modId == null || modId.isEmpty() || modType == null || modType.isEmpty()) {
+            continue;
+          }
           modsMap.put(modId, modType);
         }
       }
@@ -149,10 +154,13 @@ public class ModsDatabaseConfig {
     stringBuilder.append("#\n");
     stringBuilder.append("# Add additional mod ids and their correct environment, if needed.\n");
     stringBuilder.append("# Remove mod ids, if they are not needed anymore or\n");
-    stringBuilder.append("# use mod_id=\"default\" to disable any optimization.\n");
+    stringBuilder.append("# use mod_id=\"default\" to disable any optimization for them.\n");
     stringBuilder.append("#\n");
     stringBuilder.append("# Last update: ").append(LocalDateTime.now()).append("\n");
-    stringBuilder.append("# Note: To automatic update this file, just delete the file.\n");
+    stringBuilder.append(
+        "# Note: To automatic update this file after an mod update, just delete the file.\n");
+    stringBuilder.append(
+        "# Normally you only need to update this file, if you run into problems with specific mods.\n");
     stringBuilder.append("\n");
     stringBuilder.append("[Mods]").append("\n");
     stringBuilder.append("client_side_mod_id=\"client\"\n");
@@ -167,26 +175,23 @@ public class ModsDatabaseConfig {
     StringBuilder textContent = new StringBuilder();
     appendFileHeader(textContent);
 
-    // Add known client side mods to list.
-    Map<String, String> modIds = new HashMap<>();
-    for (String modId : ClientModsDatabase.getClientSideModsList()) {
-      modIds.put(modId, "client");
-    }
-
-    // Add known server side mods to list.
-    for (String modId : ServerModsDatabase.getServerSideModsList()) {
-      modIds.put(modId, "server");
-    }
-
-    // Adds mods to the toml config.
+    // Prepare toml writer.
     OutputStream outputStream = new ByteArrayOutputStream();
     TomlWriter tomlWriter = new TomlWriter.Builder().build();
-    try {
-      tomlWriter.write(modIds, outputStream);
-      textContent.append(outputStream);
-    } catch (Exception exception) {
-      Constants.LOG.error("There was an error, creating the config file {}:", file, exception);
-      return null;
+
+    // Adds mods to the toml config.
+    Map<String, String> sortedModDatabaseMap = getSortedModDatabaseMap();
+    if (!sortedModDatabaseMap.isEmpty()) {
+      try {
+        tomlWriter.write(sortedModDatabaseMap, outputStream);
+        textContent.append(outputStream);
+      } catch (Exception exception) {
+        Constants.LOG.error(
+            "There was an error, adding the mods database to the config file {}:", file, exception);
+        return null;
+      }
+    } else {
+      Constants.LOG.warn("No mods found inside the built-in mods database!");
     }
 
     // Define debug options.
@@ -202,7 +207,8 @@ public class ModsDatabaseConfig {
       textContent.append("[Debug]\n");
       textContent.append(outputStream);
     } catch (Exception exception) {
-      Constants.LOG.error("There was an error, creating the config file {}:", file, exception);
+      Constants.LOG.error(
+          "There was an error, adding the debug options to the config file {}:", file, exception);
       return null;
     }
 
@@ -210,11 +216,31 @@ public class ModsDatabaseConfig {
     try {
       Files.writeString(file.toPath(), textContent, StandardOpenOption.CREATE_NEW);
     } catch (Exception exception) {
-      Constants.LOG.error("There was an error, creating the config file {}:", file, exception);
+      Constants.LOG.error("There was an error, writing the config file to {}:", file, exception);
       return null;
     }
 
     return file;
+  }
+
+  @NotNull
+  private static Map<String, String> getSortedModDatabaseMap() {
+    Map<String, String> modIdMap = new HashMap<>();
+    for (String modId : ClientModsDatabase.getClientSideModsList()) {
+      modIdMap.put(modId, "client");
+    }
+
+    // Add known server side mods to list.
+    for (String modId : ServerModsDatabase.getServerSideModsList()) {
+      modIdMap.put(modId, "server");
+    }
+
+    // Add known both side mods to list.
+    for (String modId : DefaultModsDatabase.getDefaultModsList()) {
+      modIdMap.put(modId, "default");
+    }
+
+    return new TreeMap<>(modIdMap);
   }
 
   public static File getConfigFile() {
