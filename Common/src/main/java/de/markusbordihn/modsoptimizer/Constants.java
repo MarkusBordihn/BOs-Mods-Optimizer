@@ -34,9 +34,5 @@ public final class Constants {
   // Logger
   public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
 
-  // Config Prefix
-  public static final String CONFIG_ID = "adaptive_performance_tweaks";
-  public static final String CONFIG_ID_PREFIX = CONFIG_ID + "/";
-
   private Constants() {}
 }
