@@ -73,7 +73,15 @@ public record ModFileData(
       return ModFileData.parseNeoForgeModFile(manifest, path, jarFile);
     } else if (modType == ModType.FABRIC) {
       return ModFileData.parseFabricModFile(manifest, path, jarFile);
+    } else if (modType == ModType.MIXED) {
+      return ModFileData.parseMixedModFile(manifest, path, jarFile);
     }
+
+    Constants.LOG.error(
+        "⚠ Found unknown mod type {} for mod file {} with manifest {}!",
+        modType,
+        jarFile.getName(),
+        manifest != null ? manifest.getMainAttributes() : null);
 
     return new ModFileData(
         path,
@@ -95,6 +103,50 @@ public record ModFileData(
         modFileData.version(),
         modFileData.environment(),
         modFileData.timestamp());
+  }
+
+  public static ModFileData parseMixedModFile(Manifest manifest, Path path, JarFile jarFile) {
+    String modId = EMPTY_MOD_ID;
+    String name = EMPTY_MOD_NAME;
+    Version version = EMPTY_VERSION;
+    ModEnvironment environment = ModEnvironment.UNKNOWN;
+    LocalDateTime timestamp = EMPTY_TIMESTAMP;
+
+    ModFileData forgeModFileData = parseForgeModFile(manifest, path, jarFile);
+    ModFileData fabricModFileData = parseFabricModFile(manifest, path, jarFile);
+
+    if (forgeModFileData != null) {
+      modId = forgeModFileData.id();
+      name = forgeModFileData.name();
+      version = forgeModFileData.version();
+      environment = forgeModFileData.environment();
+      timestamp = forgeModFileData.timestamp();
+    } else if (fabricModFileData != null) {
+      modId = fabricModFileData.id();
+      name = fabricModFileData.name();
+      version = fabricModFileData.version();
+      environment = fabricModFileData.environment();
+      timestamp = fabricModFileData.timestamp();
+    }
+
+    // Check if jar file only contains a 'data' directory and maybe a 'meta-inf' directory, ignore
+    // other files which are not a directory to detect data packs.
+    boolean isDataPack = false;
+    for (ZipEntry zipEntry : jarFile.stream().toList()) {
+      if (zipEntry.isDirectory()) {
+        if (zipEntry.getName().startsWith("data/") || zipEntry.getName().startsWith("META-INF/")) {
+          isDataPack = true;
+        } else {
+          isDataPack = false;
+          break;
+        }
+      }
+    }
+    if (isDataPack) {
+      environment = ModEnvironment.DATA_PACK;
+    }
+
+    return new ModFileData(path, modId, ModType.MIXED, name, version, environment, timestamp);
   }
 
   public static ModFileData parseForgeModFile(Manifest manifest, Path path, JarFile jarFile) {
@@ -230,12 +282,12 @@ public record ModFileData(
     // Confirm that we have a valid mod id
     if (modId == null || modId.isEmpty() || modId.equals(EMPTY_MOD_ID)) {
       if (environment == ModEnvironment.LIBRARY) {
-        modId = "library-" + UUID.randomUUID().toString();
+        modId = "library-" + UUID.randomUUID();
       } else if (environment == ModEnvironment.LANGUAGE_PROVIDER) {
-        modId = "language-provider-" + UUID.randomUUID().toString();
+        modId = "language-provider-" + UUID.randomUUID();
       } else {
         Constants.LOG.error("⚠ Found no valid modId for {}!", path);
-        modId = "unknown-" + UUID.randomUUID().toString();
+        modId = "unknown-" + UUID.randomUUID();
       }
     }
 
@@ -277,8 +329,7 @@ public record ModFileData(
     ZipEntry modsFile = jarFile.getEntry("fabric.mod.json");
     if (modsFile != null && !modsFile.isDirectory()) {
       try (InputStream inputStream = jarFile.getInputStream(modsFile)) {
-        JsonParser jsonParser = new JsonParser();
-        JsonElement jsonElement = jsonParser.parse(new InputStreamReader(inputStream));
+        JsonElement jsonElement = JsonParser.parseReader(new InputStreamReader(inputStream));
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         if (jsonObject != null) {
           id = jsonObject.get("id").getAsString();
@@ -334,6 +385,11 @@ public record ModFileData(
 
   private static ModType getModTypeByFile(Manifest manifest, JarFile jarFile) {
     if (manifest == null || manifest.getMainAttributes() == null) {
+      // File based check for data packs, because they need no manifest.
+      if (jarFile.getEntry("META-INF/mods.toml") != null
+          && jarFile.getEntry("fabric.mod.json") != null) {
+        return ModType.MIXED;
+      }
       return ModType.UNKNOWN;
     }
 
@@ -365,9 +421,12 @@ public record ModFileData(
     }
 
     // File based check for Forge mods, because they have no specific attribute.
-    if (jarFile.getEntry("META-INF/mods.toml") != null) {
+    if (jarFile.getEntry("META-INF/mods.toml") != null
+        && jarFile.getEntry("fabric.mod.json") != null) {
+      return ModType.MIXED;
+    } else if (jarFile.getEntry("META-INF/mods.toml") != null) {
       return ModType.FORGE;
-    } else if (jarFile.getEntry("META-INF/fabric.mod.json") != null) {
+    } else if (jarFile.getEntry("fabric.mod.json") != null) {
       return ModType.FABRIC;
     }
 
@@ -386,6 +445,7 @@ public record ModFileData(
     FABRIC,
     FORGE,
     NEOFORGE,
+    MIXED,
     UNKNOWN
   }
 
@@ -395,6 +455,7 @@ public record ModFileData(
     SERVER,
     LIBRARY,
     LANGUAGE_PROVIDER,
+    DATA_PACK,
     UNKNOWN
   }
 }
