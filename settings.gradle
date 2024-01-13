@@ -21,4 +21,4 @@ pluginManagement {
 }
 
 rootProject.name = 'Mods Optimizer'
-include("Common", "Fabric", "Forge", "NeoForge")
+include("Common", "Forge", "NeoForge")
