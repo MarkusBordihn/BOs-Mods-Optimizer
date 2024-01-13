@@ -27,6 +27,5 @@ public class ModsOptimizer implements ModInitializer {
   public void onInitialize() {
     // Use Fabric to bootstrap the Common mod.
     Constants.LOG.info("Initializing {} (Fabric) ...", Constants.MOD_NAME);
-    ModsOptimizerCommon.init();
   }
 }

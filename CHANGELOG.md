@@ -5,6 +5,12 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v1.5.0
+
+- Added support for [Things pack][thing_pack].
+- Improved general Forge, Fabric and NeoForge mod detection.
+- Improved data pack detection.
+
 ### v1.4.0
 
 - Added support for mixed mods and data pack mods.
@@ -35,3 +41,5 @@ For the full changelog, please go to the [GitHub History][history] instead.
 - Initial release of Mods Optimizer (will replace Adaptive Performance Tweaks Mod Module).
 
 [history]: https://github.com/MarkusBordihn/BOs-Mods-Optimizer/commits/main
+
+[things_pack]: https://www.curseforge.com/minecraft/modpacks/things-pack
