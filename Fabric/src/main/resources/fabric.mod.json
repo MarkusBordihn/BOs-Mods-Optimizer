@@ -1,35 +1,18 @@
 {
   "schemaVersion": 1,
-  "id": "fire_extinguisher",
+  "id": "mods_optimizer",
   "version": "${version}",
-  "name": "Fire Extinguisher",
-  "description": "Enhance your fire safety with a straightforward and effective fire extinguisher modification that incorporates essential items for combating fires.",
+  "name": "Mods Optimizer",
+  "description": "Automatic and realtime server bundling (one mod pack for client/server) and mod clean up for better performance and less crashes.",
   "authors": [
     "Markus Bordihn"
   ],
   "contact": {
-    "homepage": "https://www.curseforge.com/minecraft/mc-mods/fire-extinguisher",
-    "issues": "https://github.com/MarkusBordihn/BOs-Fire-Extinguisher/issues"
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/mods-optimizer/",
+    "issues": "https://github.com/MarkusBordihn/BOs-Mods-Optimizer/issues"
   },
   "license": "MIT",
   "icon": "logo.png",
-  "environment": "*",
-  "entrypoints": {
-    "main": [
-      "de.markusbordihn.modsoptimizer.ModsOptimizer"
-    ],
-    "client": [
-      "de.markusbordihn.modsoptimizer.ModsOptimizerClient"
-    ]
-  },
-  "mixins": [
-    "modsoptimizer.mixins.json"
-  ],
-  "depends": {
-    "fabricloader": ">=0.13",
-    "fabric": "*",
-    "minecraft": "1.18.2",
-    "java": ">=17"
-  }
+  "environment": "*"
 }
   
