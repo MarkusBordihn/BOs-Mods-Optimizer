@@ -198,5 +198,11 @@ class ModDataTests {
     assertEquals(ModType.MIXED, sampleModFileData01.modType());
     assertEquals(ModEnvironment.DATA_PACK, sampleModFileData01.environment());
     assertEquals("explorify", sampleModFileData01.id());
+
+    ModFileData sampleModFileData02 =
+        ModData.readModInfo(testModDatapackSampleFiles, "SmidgeonOBliss-1.19.2-1.3.2.jar");
+    assertEquals(ModType.FORGE, sampleModFileData02.modType());
+    assertEquals(ModEnvironment.DATA_PACK, sampleModFileData02.environment());
+    assertEquals("sob", sampleModFileData02.id());
   }
 }
