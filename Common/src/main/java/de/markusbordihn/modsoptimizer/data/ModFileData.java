@@ -129,12 +129,15 @@ public record ModFileData(
       timestamp = fabricModFileData.timestamp();
     }
 
-    // Check if jar file only contains a 'data' directory and maybe a 'meta-inf' directory, ignore
-    // other files which are not a directory to detect data packs.
+    // Check if jar file only contains a 'assets', 'data' directory and maybe a 'meta-inf' or
+    // 'things' directory, ignore other files which are not a directory to detect data packs.
     boolean isDataPack = false;
     for (ZipEntry zipEntry : jarFile.stream().toList()) {
       if (zipEntry.isDirectory()) {
-        if (zipEntry.getName().startsWith("data/") || zipEntry.getName().startsWith("META-INF/")) {
+        if (zipEntry.getName().startsWith("assets/")
+            || zipEntry.getName().startsWith("data/")
+            || zipEntry.getName().startsWith("META-INF/")
+            || zipEntry.getName().startsWith("things/")) {
           isDataPack = true;
         } else {
           isDataPack = false;
@@ -166,6 +169,12 @@ public record ModFileData(
         modId = modsToml.getString(modsPrefix + "modId");
         name = modsToml.getString(modsPrefix + "displayName");
 
+        // Use modLoader for data pack detection.
+        if (modsToml.getString("modLoader") != null
+            && modsToml.getString("modLoader").equalsIgnoreCase("lowcodefml")) {
+          environment = ModEnvironment.DATA_PACK;
+        }
+
         // Parse version number.
         if (modsToml.getString(modsVersionId) != null
             && !modsToml.getString(modsVersionId).startsWith("${")) {
@@ -180,33 +189,35 @@ public record ModFileData(
 
         // Iterate over all dependencies (max. 10) and check the required side for "forge" or
         // "neoforge", we don't care about other dependencies yet.
-        for (int i = 0; i < 10; i++) {
-          String dependencyId = "dependencies." + modId + "[" + i + "]";
-          try {
-            if (!modsToml.contains(dependencyId)) {
+        if (environment == ModEnvironment.UNKNOWN) {
+          for (int i = 0; i < 10; i++) {
+            String dependencyId = "dependencies." + modId + "[" + i + "]";
+            try {
+              if (!modsToml.contains(dependencyId)) {
+                break;
+              }
+            } catch (Exception e) {
               break;
             }
-          } catch (Exception e) {
-            break;
-          }
-          if (modsToml.getString(dependencyId + ".modId").equals("forge")
-              || modsToml.getString(dependencyId + ".modId").equals("neoforge")) {
-            if (modsToml.getString(dependencyId + ".side") != null) {
-              String requiredSide = modsToml.getString(dependencyId + ".side").toLowerCase();
-              environment =
-                  switch (requiredSide) {
-                    case "client" -> ModEnvironment.CLIENT;
-                    case "server" -> ModEnvironment.SERVER;
-                    case "both" -> ModEnvironment.DEFAULT;
-                    default -> environment;
-                  };
-            } else {
-              Constants.LOG.warn(
-                  "⚠ Found no side tag inside the {} section of the mods.toml file {}!",
-                  dependencyId,
-                  path);
+            if (modsToml.getString(dependencyId + ".modId").equals("forge")
+                || modsToml.getString(dependencyId + ".modId").equals("neoforge")) {
+              if (modsToml.getString(dependencyId + ".side") != null) {
+                String requiredSide = modsToml.getString(dependencyId + ".side").toLowerCase();
+                environment =
+                    switch (requiredSide) {
+                      case "client" -> ModEnvironment.CLIENT;
+                      case "server" -> ModEnvironment.SERVER;
+                      case "both" -> ModEnvironment.DEFAULT;
+                      default -> environment;
+                    };
+              } else {
+                Constants.LOG.warn(
+                    "⚠ Found no side tag inside the {} section of the mods.toml file {}!",
+                    dependencyId,
+                    path);
+              }
+              break;
             }
-            break;
           }
         }
 
@@ -259,7 +270,8 @@ public record ModFileData(
       }
 
       // Get fml mod type, if available.
-      if (hasAttributeValue(MANIFEST_FML_MOD_TYPE, attributes)) {
+      if (environment == ModEnvironment.UNKNOWN
+          && hasAttributeValue(MANIFEST_FML_MOD_TYPE, attributes)) {
         String fmlModType = attributes.getValue(MANIFEST_FML_MOD_TYPE);
         switch (fmlModType) {
           case "LIBRARY", "GAMELIBRARY" -> environment = ModEnvironment.LIBRARY;
@@ -267,8 +279,8 @@ public record ModFileData(
           case "MOD" -> {
             // Ignore MOD, because we already have a default environment.
           }
-          default -> Constants.LOG.warn(
-              "⚠ Found unknown fml mod type {} for {}!", fmlModType, path);
+          default ->
+              Constants.LOG.warn("⚠ Found unknown fml mod type {} for {}!", fmlModType, path);
         }
       }
       timestamp = parseTimestamp(attributes.getValue(MANIFEST_IMPLEMENTATION_TIMESTAMP));
@@ -285,6 +297,8 @@ public record ModFileData(
         modId = "library-" + UUID.randomUUID();
       } else if (environment == ModEnvironment.LANGUAGE_PROVIDER) {
         modId = "language-provider-" + UUID.randomUUID();
+      } else if (environment == ModEnvironment.DATA_PACK) {
+        modId = "data-pack-" + UUID.randomUUID();
       } else {
         Constants.LOG.error("⚠ Found no valid modId for {}!", path);
         modId = "unknown-" + UUID.randomUUID();
@@ -384,43 +398,37 @@ public record ModFileData(
   }
 
   private static ModType getModTypeByFile(Manifest manifest, JarFile jarFile) {
-    if (manifest == null || manifest.getMainAttributes() == null) {
-      // File based check for data packs, because they need no manifest.
-      if (jarFile.getEntry("META-INF/mods.toml") != null
-          && jarFile.getEntry("fabric.mod.json") != null) {
-        return ModType.MIXED;
-      }
-      return ModType.UNKNOWN;
-    }
-
-    // Simple check for Fabric mods, because they have a Fabric-Gradle-Version or
-    // Fabric-Loader-Version attribute.
-    Attributes mainAttributes = manifest.getMainAttributes();
-    if ((mainAttributes.getValue("Fabric-Gradle-Version") != null
-            && !mainAttributes.getValue("Fabric-Gradle-Version").isEmpty())
-        || (mainAttributes.getValue("Fabric-Loader-Version") != null
-            && !mainAttributes.getValue("Fabric-Loader-Version").isEmpty())) {
-      return ModType.FABRIC;
-    } else if (hasAttributeValue(MANIFEST_IMPLEMENTATION_TITLE, mainAttributes)
-        && mainAttributes.getValue(MANIFEST_IMPLEMENTATION_TITLE).equals("NeoForge")) {
-      return ModType.NEOFORGE;
-    } else if (hasAttributeValue(MANIFEST_FML_MOD_TYPE, mainAttributes)) {
-      return ModType.FORGE;
-    }
 
     // File name based check.
     String fileName = jarFile.getName().toLowerCase();
     if (fileName.endsWith(".jar")) {
-      if (fileName.contains("-neoforge-")) {
+      if (fileName.contains("-neoforge-") || fileName.endsWith("-neoforge.jar")) {
         return ModType.NEOFORGE;
-      } else if (fileName.startsWith("-fabric-")) {
+      } else if (fileName.startsWith("-fabric-") || fileName.endsWith("-fabric.jar")) {
         return ModType.FABRIC;
-      } else if (fileName.startsWith("-forge-")) {
+      } else if (fileName.startsWith("-forge-") || fileName.endsWith("-forge.jar")) {
         return ModType.FORGE;
       }
     }
 
-    // File based check for Forge mods, because they have no specific attribute.
+    // Simple check for Fabric mods, because they have a Fabric-Gradle-Version or
+    // Fabric-Loader-Version attribute.
+    if (manifest != null && manifest.getMainAttributes() != null) {
+      Attributes mainAttributes = manifest.getMainAttributes();
+      if ((mainAttributes.getValue("Fabric-Gradle-Version") != null
+              && !mainAttributes.getValue("Fabric-Gradle-Version").isEmpty())
+          || (mainAttributes.getValue("Fabric-Loader-Version") != null
+              && !mainAttributes.getValue("Fabric-Loader-Version").isEmpty())) {
+        return ModType.FABRIC;
+      } else if (hasAttributeValue(MANIFEST_IMPLEMENTATION_TITLE, mainAttributes)
+          && mainAttributes.getValue(MANIFEST_IMPLEMENTATION_TITLE).equals("NeoForge")) {
+        return ModType.NEOFORGE;
+      } else if (hasAttributeValue(MANIFEST_FML_MOD_TYPE, mainAttributes)) {
+        return ModType.FORGE;
+      }
+    }
+
+    // File based check for data packs, Forge and Fabric mods.
     if (jarFile.getEntry("META-INF/mods.toml") != null
         && jarFile.getEntry("fabric.mod.json") != null) {
       return ModType.MIXED;
@@ -432,7 +440,9 @@ public record ModFileData(
 
     // Unknown mod type
     Constants.LOG.warn(
-        "⚠ Unable to detect mod type for {} with manifest {}", jarFile.getName(), mainAttributes);
+        "⚠ Unable to detect mod type for {} with manifest {}",
+        jarFile.getName(),
+        manifest != null ? manifest.getMainAttributes() : null);
     return ModType.UNKNOWN;
   }
 

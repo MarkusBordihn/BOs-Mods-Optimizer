@@ -78,7 +78,7 @@ public class ModData {
       String modFileName = modFile.getName();
       if (modFileName.endsWith(fileExtension)) {
         ModFileData modFileData = readModInfo(modFile);
-        if (modFileData != null) {
+        if (modFileData != null && modFileData.id() != null && !modFileData.id().isEmpty()) {
 
           // Check for duplicated mods.
           if (knownModsMap.containsKey(modFileData.id())) {
@@ -111,7 +111,20 @@ public class ModData {
           } else {
             defaultModsSet.add(modFileData);
           }
+        } else {
+          Constants.LOG.error(
+              "{} ⚠ Unable to parse mod file {} in {}",
+              LOG_PREFIX,
+              modFileName,
+              modFile.getAbsolutePath());
         }
+      } else {
+        Constants.LOG.debug(
+            "{} ⚠ Ignore mod file {} in {} with file extension {}",
+            LOG_PREFIX,
+            modFileName,
+            modFile.getAbsolutePath(),
+            fileExtension);
       }
     }
 
@@ -200,6 +213,7 @@ public class ModData {
 
   public static ModFileData readModInfo(File modFile) {
     if (modFile == null || !modFile.exists()) {
+      Constants.LOG.error("{} ⚠ Unable to find mod file at: {}", LOG_PREFIX, modFile);
       return null;
     }
     return readModInfo(modFile.toPath());
@@ -222,7 +236,10 @@ public class ModData {
       // Read manifest
       Manifest manifest = jarFile.getManifest();
       if (manifest == null) {
-        Constants.LOG.warn("{} ⚠ Unable to read manifest from mod file {}", LOG_PREFIX, modFile);
+        Constants.LOG.warn(
+            "{} ⚠ Unable to read manifest from mod file {}, which is expected in some cases.",
+            LOG_PREFIX,
+            modFile);
       }
 
       // Parse mod file data
