@@ -5,17 +5,26 @@ plugins {
   id 'com.matthewprenger.cursegradle' version '1.4.0'
   id 'nu.studer.credentials' version '3.0'
   id "com.modrinth.minotaur" version "2.+"
+  id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 archivesBaseName = "${mod_id}-fabric-${minecraft_version}"
+
+configurations {
+  shade
+  implementation.extendsFrom shade
+}
 
 dependencies {
   minecraft "com.mojang:minecraft:${minecraft_version}"
   mappings loom.officialMojangMappings()
   modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-  implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.1'
 
   implementation project(":Common")
+
+  // Extra libraries
+  shade 'com.moandjiezana.toml:toml4j:0.7.2'
+  shade 'com.github.zafarkhaja:java-semver:0.9.0'
 }
 
 loom {
@@ -35,7 +44,6 @@ loom {
   }
 }
 
-
 processResources {
   from project(":Common").sourceSets.main.resources
   inputs.property "version", project.version
@@ -43,6 +51,27 @@ processResources {
   filesMatching("fabric.mod.json") {
     expand "version": project.version
   }
+}
+
+jar.enabled = false
+shadowJar {
+  finalizedBy 'remapJar'
+
+  archiveClassifier = jar.archiveClassifier
+  destinationDirectory = jar.destinationDirectory
+  configurations = [project.configurations.shade]
+  relocate 'com.moandjiezana.toml', "${project.group}.thirdparty.toml4j"
+  relocate 'com.github.zafarkhaja', "${project.group}.thirdparty.semver"
+  dependencies {
+    include(dependency('com.moandjiezana.toml:toml4j:.*'))
+    include(dependency('com.github.zafarkhaja:java-semver:.*'))
+  }
+  minimize()
+}
+
+remapJar {
+  inputFile = shadowJar.archiveFile
+  dependsOn shadowJar
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -76,6 +105,7 @@ curseforge {
     addGameVersion("${minecraft_version}")
     addGameVersion("Fabric")
     addGameVersion("Quilt")
+    mainArtifact(remapJar)
   }
   options {
     forgeGradleIntegration = false
