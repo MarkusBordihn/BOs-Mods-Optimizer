@@ -239,7 +239,6 @@ public class ClientModsDatabase {
           "particlesenhanced",
           "physicsmod",
           "pickupnotifier",
-          "playeranimator",
           "playerhealthindicators",
           "presence-footsteps",
           "puzzle",
