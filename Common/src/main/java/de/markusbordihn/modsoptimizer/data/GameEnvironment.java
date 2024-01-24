@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Markus Bordihn
+ * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -17,26 +17,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package de.markusbordihn.modsoptimizer.platform;
+package de.markusbordihn.modsoptimizer.data;
 
-import de.markusbordihn.modsoptimizer.platform.services.IPlatformHelper;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLLoader;
-
-public class ForgePlatformHelper implements IPlatformHelper {
-
-  @Override
-  public String getPlatformName() {
-    return "Forge";
-  }
-
-  @Override
-  public boolean isModLoaded(String modId) {
-    return ModList.get().isLoaded(modId);
-  }
-
-  @Override
-  public boolean isDevelopmentEnvironment() {
-    return !FMLLoader.isProduction();
-  }
+public enum GameEnvironment {
+  CLIENT,
+  SERVER,
+  UNKNOWN
 }

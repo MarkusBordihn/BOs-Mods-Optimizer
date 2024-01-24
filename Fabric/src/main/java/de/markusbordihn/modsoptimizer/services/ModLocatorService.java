@@ -20,6 +20,11 @@
 package de.markusbordihn.modsoptimizer.services;
 
 import de.markusbordihn.modsoptimizer.Constants;
+import de.markusbordihn.modsoptimizer.data.GameEnvironment;
+import de.markusbordihn.modsoptimizer.service.ModsOptimizerService;
+import java.util.concurrent.TimeUnit;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.impl.FabricLoaderImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,6 +33,48 @@ public class ModLocatorService {
   protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   public ModLocatorService() {
-    log.info("{} ♻ init ...", Constants.LOG_PREFIX);
+    log.info("ModLocatorService");
+  }
+
+  public void init() {
+
+    // Detect game environment.
+    FabricLoaderImpl fabricLoader = FabricLoaderImpl.INSTANCE;
+    if (fabricLoader == null) {
+      log.error("Fabric Loader is not available!");
+      return;
+    }
+    EnvType envType = FabricLoaderImpl.INSTANCE.getEnvironmentType();
+    GameEnvironment gameEnvironment = GameEnvironment.UNKNOWN;
+    if (envType == EnvType.SERVER) {
+      gameEnvironment = GameEnvironment.SERVER;
+    } else if (envType == EnvType.CLIENT) {
+      gameEnvironment = GameEnvironment.CLIENT;
+    }
+
+    // Setup and initialized Mods Optimizer Service.
+    ModsOptimizerService modsOptimizer =
+        new ModsOptimizerService(
+                fabricLoader.getGameDir().toFile(),
+                fabricLoader.getModsDirectory(),
+                gameEnvironment)
+            .init();
+
+    // Re-enable client side mods on client.
+    modsOptimizer.enableClientSideMods();
+
+    // Parsing mods data.
+    modsOptimizer.parseMods();
+
+    // Check for duplicated mods.
+    modsOptimizer.optimizeDuplicatedMods();
+
+    // Disable client side mods on ded-server.
+    modsOptimizer.disableClientSideMods();
+
+    // Record total time.
+    Constants.LOG.info(
+        "⏱ Mod Optimizer needs {} ms in total.",
+        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - modsOptimizer.getTotalStartTime()));
   }
 }

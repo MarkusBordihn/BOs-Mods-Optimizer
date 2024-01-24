@@ -29,6 +29,12 @@ If the mod is used on a server all client related mods will be automatically ren
 ???.client".
 The mod is mostly helpful if it is used on the server and the client side.
 
+## Fabric Support ?
+
+Unfortunately Fabric is not supporting loading any mods / code after the `GameProvider` but before
+the Fabric Mod Loader, for this reason we are currently not able to support Fabric as long as this
+is not changed.
+
 ## Example Mod Pack
 
 If you want to see this mod in action, please take a look at:
