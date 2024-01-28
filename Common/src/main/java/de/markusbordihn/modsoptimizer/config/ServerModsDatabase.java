@@ -34,9 +34,14 @@ public class ServerModsDatabase {
           "adaptive_performance_tweaks_player",
           "adaptive_performance_tweaks_spawn",
           "alternate-current",
+          "chunk-sending-forge-fabric",
           "discordsrv",
           "e4mc",
+          "leaky",
           "publicguiannouncement",
+          "quick-leaf-decay",
+          "simplebackups",
+          "smoothchunk",
           "villagerdeathmessages");
 
   protected ServerModsDatabase() {}
