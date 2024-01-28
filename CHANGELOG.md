@@ -5,6 +5,11 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v1.6.0
+
+- Updated known client side and server side mods. Thanks to `@adamk33n3r`, `@ChangeOtaku`
+  and `@Jadan1213`.
+
 ### v1.5.0
 
 - Added support for [Things pack][thing_pack].
