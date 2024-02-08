@@ -44,6 +44,7 @@ public class ModData {
   private static final Set<ModFileData> clientModsSet = new HashSet<>();
   private static final Set<ModFileData> dataPackModsSet = new HashSet<>();
   private static final Set<ModFileData> serverModsSet = new HashSet<>();
+  private static final Set<ModFileData> serviceModsSet = new HashSet<>();
   private static final Set<ModFileData> libraryModsSet = new HashSet<>();
   private static final Set<ModFileData> defaultModsSet = new HashSet<>();
   private static final Set<ModFileData> languageProviderModsSet = new HashSet<>();
@@ -81,20 +82,22 @@ public class ModData {
         if (modFileData != null && modFileData.id() != null && !modFileData.id().isEmpty()) {
 
           // Check for duplicated mods.
-          if (knownModsMap.containsKey(modFileData.id())) {
-            Constants.LOG.error(
-                "{} ⚠ Duplicated mod {} found in {} and {}",
-                LOG_PREFIX,
-                modFileData.id(),
-                modFileData.path(),
-                knownModsMap.get(modFileData.id()).path());
-            if (!duplicatedModsMap.containsKey(modFileData.id())) {
-              duplicatedModsMap.put(modFileData.id(), new HashSet<>());
+          if (!modFileData.id().equals(ModFileData.EMPTY_MOD_ID)) {
+            if (knownModsMap.containsKey(modFileData.id())) {
+              Constants.LOG.error(
+                  "{} ⚠ Duplicated mod {} found in {} and {}",
+                  LOG_PREFIX,
+                  modFileData.id(),
+                  modFileData.path(),
+                  knownModsMap.get(modFileData.id()).path());
+              if (!duplicatedModsMap.containsKey(modFileData.id())) {
+                duplicatedModsMap.put(modFileData.id(), new HashSet<>());
+              }
+              duplicatedModsMap.get(modFileData.id()).add(modFileData);
+              duplicatedModsMap.get(modFileData.id()).add(knownModsMap.get(modFileData.id()));
+            } else {
+              knownModsMap.put(modFileData.id(), modFileData);
             }
-            duplicatedModsMap.get(modFileData.id()).add(modFileData);
-            duplicatedModsMap.get(modFileData.id()).add(knownModsMap.get(modFileData.id()));
-          } else {
-            knownModsMap.put(modFileData.id(), modFileData);
           }
 
           // Add mods to environment specific mod list.
@@ -102,6 +105,8 @@ public class ModData {
             clientModsSet.add(modFileData);
           } else if (modFileData.environment() == ModEnvironment.SERVER) {
             serverModsSet.add(modFileData);
+          } else if (modFileData.environment() == ModEnvironment.SERVICE) {
+            serviceModsSet.add(modFileData);
           } else if (modFileData.environment() == ModEnvironment.LIBRARY) {
             libraryModsSet.add(modFileData);
           } else if (modFileData.environment() == ModEnvironment.LANGUAGE_PROVIDER) {
@@ -175,6 +180,13 @@ public class ModData {
           serverModsSet.size(),
           knownModsMap.size());
     }
+    if (!serviceModsSet.isEmpty()) {
+      Constants.LOG.info(
+          "{} Found {} service mods in {} mods.",
+          LOG_PREFIX,
+          serviceModsSet.size(),
+          knownModsMap.size());
+    }
     if (!defaultModsSet.isEmpty()) {
       Constants.LOG.info(
           "{} Found {} default mods in {} mods.",
@@ -243,7 +255,7 @@ public class ModData {
       }
 
       // Parse mod file data
-      ModFileData modFileData = ModFileData.parseModFile(manifest, modFile, jarFile);
+      ModFileData modFileData = ModFileParser.parseModFile(manifest, modFile, jarFile);
 
       // Check local mods database and update mod environment, if needed.
       if (ModsDatabaseConfig.containsMod(modFileData.id())) {
