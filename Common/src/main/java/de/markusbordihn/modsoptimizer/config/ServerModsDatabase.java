@@ -35,6 +35,7 @@ public class ServerModsDatabase {
           "adaptive_performance_tweaks_spawn",
           "alternate-current",
           "chunk-sending-forge-fabric",
+          "deathbackup",
           "discordsrv",
           "e4mc",
           "leaky",
