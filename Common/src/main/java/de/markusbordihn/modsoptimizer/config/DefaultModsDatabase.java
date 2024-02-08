@@ -25,7 +25,17 @@ import java.util.List;
 public class DefaultModsDatabase {
 
   /** List of mods, which are needed on both sides! */
-  private static final List<String> defaultSideModsList = Arrays.asList("attributefix");
+  private static final List<String> defaultSideModsList =
+      Arrays.asList(
+          "ageingspawners",
+          "attributefix",
+          "betterstrongholds",
+          "humancompanions",
+          "kobolds",
+          "lootr",
+          "paraglider",
+          "starterkit",
+          "tumbleweed");
 
   protected DefaultModsDatabase() {}
 
