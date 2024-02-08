@@ -5,6 +5,14 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v1.7.0
+
+- Added mods reader for `quilt.mod.json` files. #13
+- Added detection for service mods like `Sinytra Connector`. #13
+- Added additional tests for mod detection, especially for mixed mods and cross-loaded mods.
+- Improved duplication detection by adding additional checks for mod versions and mod ids.
+- General Code optimizations and improvements.
+
 ### v1.6.0
 
 - Updated known client side and server side mods. Thanks to `@adamk33n3r`, `@ChangeOtaku`
