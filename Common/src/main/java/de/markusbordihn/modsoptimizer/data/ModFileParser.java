@@ -154,21 +154,15 @@ public class ModFileParser {
   }
 
   public static ModFileData parseMixedModFile(Manifest manifest, Path path, JarFile jarFile) {
-    String modId = ModFileData.EMPTY_MOD_ID;
-    String name = ModFileData.EMPTY_MOD_NAME;
-    Version version = ModFileData.EMPTY_VERSION;
-    ModEnvironment environment = ModEnvironment.UNKNOWN;
-    LocalDateTime timestamp = ModFileData.EMPTY_TIMESTAMP;
-
     ModFileData forgeModFileData = parseForgeModFile(manifest, path, jarFile);
     ModFileData fabricModFileData = parseFabricModFile(manifest, path, jarFile);
 
     // Check for forge mods data.
-    modId = forgeModFileData.id();
-    name = forgeModFileData.name();
-    version = forgeModFileData.version();
-    environment = forgeModFileData.environment();
-    timestamp = forgeModFileData.timestamp();
+    String modId = forgeModFileData.id();
+    String name = forgeModFileData.name();
+    Version version = forgeModFileData.version();
+    ModEnvironment environment = forgeModFileData.environment();
+    LocalDateTime timestamp = forgeModFileData.timestamp();
 
     // Check for fabric mods data.
     if (modId == null || modId.isEmpty() || modId.equals(ModFileData.EMPTY_MOD_ID)) {
