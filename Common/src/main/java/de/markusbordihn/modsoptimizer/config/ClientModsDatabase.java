@@ -299,6 +299,7 @@ public class ClientModsDatabase {
           "whats-that-slot",
           "worldtime",
           "wynntils",
+          "yungsmenutweaks",
           "zmedievalmusic",
           "zoomify");
 
