@@ -5,6 +5,11 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v.1.8.0
+
+- Updated known client side mods. Thanks to `@CorneliusCornbread`.
+- Small code optimizations and improvements.
+
 ### v1.7.0
 
 - Added mods reader for `quilt.mod.json` files. #13
@@ -20,7 +25,7 @@ For the full changelog, please go to the [GitHub History][history] instead.
 
 ### v1.5.0
 
-- Added support for [Things pack][thing_pack].
+- Added support for [Things pack][things_pack].
 - Improved general Forge, Fabric and NeoForge mod detection.
 - Improved data pack detection.
 
