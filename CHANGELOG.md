@@ -5,6 +5,13 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v2.0.0
+
+- Added JSON parse with additional checks, to avoid crashes on invalid .json files. #17
+- Added TOML parse with additional checks, to avoid crashes on invalid .toml files.
+- Added additional warnings for invalid mod files.
+- Improved code quality and added additional tests.
+
 ### v.1.8.0
 
 - Updated known client side mods. Thanks to `@CorneliusCornbread`.
