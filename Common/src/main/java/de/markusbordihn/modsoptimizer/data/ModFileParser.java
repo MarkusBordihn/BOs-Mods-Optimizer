@@ -20,17 +20,13 @@
 package de.markusbordihn.modsoptimizer.data;
 
 import com.github.zafarkhaja.semver.Version;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.moandjiezana.toml.Toml;
 import de.markusbordihn.modsoptimizer.Constants;
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModEnvironment;
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModType;
 import de.markusbordihn.modsoptimizer.utils.SemanticVersionUtils;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -234,82 +230,89 @@ public class ModFileParser {
     LocalDateTime timestamp = ModFileData.EMPTY_TIMESTAMP;
 
     // Parse mods.toml file
-    ZipEntry modsFile = jarFile.getEntry("META-INF/mods.toml");
-    if (modsFile != null && !modsFile.isDirectory()) {
-      try (InputStream inputStream = jarFile.getInputStream(modsFile)) {
-        Toml modsToml = new Toml().read(inputStream);
-        String modsPrefix = "mods[0].";
-        String modsVersionId = modsPrefix + "version";
+    Toml modsToml = TomlFileParser.readTomlFile(jarFile, Path.of("META-INF/mods.toml"));
+    if (modsToml != null && !modsToml.isEmpty()) {
+      String modsPrefix = "mods[0].";
+      String modsVersionId = modsPrefix + "version";
+
+      // Parse mod id.
+      if (modsToml.getString(modsPrefix + "modId") != null) {
         modId = modsToml.getString(modsPrefix + "modId");
+      } else {
+        Constants.LOG.warn("⚠ Found no modId tag inside the mods.toml file {}!", path);
+      }
+
+      // Parse mod name.
+      if (modsToml.getString(modsPrefix + "displayName") != null) {
         name = modsToml.getString(modsPrefix + "displayName");
+      } else {
+        Constants.LOG.warn("⚠ Found no displayName tag inside the mods.toml file {}!", path);
+      }
 
-        // Use modLoader for data pack detection.
-        if (modsToml.getString("modLoader") != null
-            && modsToml.getString("modLoader").equalsIgnoreCase("lowcodefml")) {
-          environment = ModEnvironment.DATA_PACK;
-        }
+      // Use modLoader for data pack detection.
+      if (modsToml.getString("modLoader") != null
+          && modsToml.getString("modLoader").equalsIgnoreCase("lowcodefml")) {
+        environment = ModEnvironment.DATA_PACK;
+      }
 
-        // Parse version number.
-        if (modsToml.getString(modsVersionId) != null
-            && !modsToml.getString(modsVersionId).startsWith("${")) {
-          version = SemanticVersionUtils.parseVersion(modsToml.getString(modsVersionId));
-        } else if (modsToml.getString("version") != null
-            && !modsToml.getString("version").startsWith("${")) {
-          Constants.LOG.warn(
-              "⚠ The version tag should be placed inside the [[mods]] section of the mods.toml file {}!",
-              path);
-          version = SemanticVersionUtils.parseVersion(modsToml.getString("version"));
-        }
+      // Parse version number.
+      if (modsToml.getString(modsVersionId) != null
+          && !modsToml.getString(modsVersionId).startsWith("${")) {
+        version = SemanticVersionUtils.parseVersion(modsToml.getString(modsVersionId));
+      } else if (modsToml.getString("version") != null
+          && !modsToml.getString("version").startsWith("${")) {
+        Constants.LOG.warn(
+            "⚠ The version tag should be placed inside the [[mods]] section of the mods.toml file {}!",
+            path);
+        version = SemanticVersionUtils.parseVersion(modsToml.getString("version"));
+      }
 
-        // Iterate over all dependencies (max. 10) and check the required side for "forge" or
-        // "neoforge", we don't care about other dependencies yet.
-        if (environment == ModEnvironment.UNKNOWN) {
-          for (int i = 0; i < 10; i++) {
-            String dependencyId = "dependencies." + modId + "[" + i + "]";
-            try {
-              if (!modsToml.contains(dependencyId)) {
-                break;
-              }
-            } catch (Exception e) {
+      // Iterate over all dependencies (max. 10) and check the required side for "forge" or
+      // "neoforge", we don't care about other dependencies yet.
+      if (environment == ModEnvironment.UNKNOWN) {
+        for (int i = 0; i < 10; i++) {
+          String dependencyId = "dependencies." + modId + "[" + i + "]";
+          try {
+            if (!modsToml.contains(dependencyId)) {
               break;
             }
-            if (modsToml.getString(dependencyId + ".modId").equals("forge")
-                || modsToml.getString(dependencyId + ".modId").equals("neoforge")) {
-              if (modsToml.getString(dependencyId + ".side") != null) {
-                String requiredSide = modsToml.getString(dependencyId + ".side").toLowerCase();
-                environment =
-                    switch (requiredSide) {
-                      case "client" -> ModEnvironment.CLIENT;
-                      case "server" -> ModEnvironment.SERVER;
-                      case "both" -> ModEnvironment.DEFAULT;
-                      default -> environment;
-                    };
-              } else {
-                Constants.LOG.warn(
-                    "⚠ Found no side tag inside the {} section of the mods.toml file {}!",
-                    dependencyId,
-                    path);
-              }
-              break;
+          } catch (Exception e) {
+            break;
+          }
+          if (modsToml.getString(dependencyId + ".modId").equals("forge")
+              || modsToml.getString(dependencyId + ".modId").equals("neoforge")) {
+            if (modsToml.getString(dependencyId + ".side") != null) {
+              String requiredSide = modsToml.getString(dependencyId + ".side").toLowerCase();
+              environment =
+                  switch (requiredSide) {
+                    case "client" -> ModEnvironment.CLIENT;
+                    case "server" -> ModEnvironment.SERVER;
+                    case "both" -> ModEnvironment.DEFAULT;
+                    default -> environment;
+                  };
+            } else {
+              Constants.LOG.warn(
+                  "⚠ Found no side tag inside the {} section of the mods.toml file {}!",
+                  dependencyId,
+                  path);
             }
+            break;
           }
         }
+      }
 
-        // Use displayTest for hints of the environment, even it is used very rarely.
-        if (environment == ModEnvironment.UNKNOWN) {
-          String displayTest = modsToml.getString("mods[0].displayTest");
-          if (displayTest != null) {
-            environment =
-                switch (displayTest) {
-                  case "IGNORE_SERVER_VERSION" -> ModEnvironment.SERVER;
-                  case "IGNORE_ALL_VERSION" -> ModEnvironment.CLIENT;
-                  case "MATCH_VERSION" -> ModEnvironment.DEFAULT;
-                  default -> environment;
-                };
-          }
+      // Use displayTest for hints of the environment, even it is used very rarely.
+      if (environment == ModEnvironment.UNKNOWN) {
+        String displayTest = modsToml.getString("mods[0].displayTest");
+        if (displayTest != null) {
+          environment =
+              switch (displayTest) {
+                case "IGNORE_SERVER_VERSION" -> ModEnvironment.SERVER;
+                case "IGNORE_ALL_VERSION" -> ModEnvironment.CLIENT;
+                case "MATCH_VERSION" -> ModEnvironment.DEFAULT;
+                default -> environment;
+              };
         }
-      } catch (Exception e) {
-        Constants.LOG.error("⚠ Was unable to read mods file {} from {}:", modsFile, path, e);
       }
     } else {
       Constants.LOG.warn("⚠ Found no META-INF/mods.toml file for {}!", path);
@@ -392,52 +395,48 @@ public class ModFileParser {
     LocalDateTime timestamp = ModFileData.EMPTY_TIMESTAMP;
 
     // Parse fabric.mod.json file
-    ZipEntry modsFile = jarFile.getEntry("quilt.mod.json");
-    if (modsFile != null && !modsFile.isDirectory()) {
-      try (InputStream inputStream = jarFile.getInputStream(modsFile)) {
-        JsonElement jsonElement = JsonParser.parseReader(new InputStreamReader(inputStream));
-        JsonObject jsonObject = jsonElement.getAsJsonObject();
+    JsonObject jsonObject = JsonFileParser.readJsonFile(jarFile, Path.of("quilt.mod.json"));
+    if (jsonObject != null && !jsonObject.isJsonNull()) {
+      // Parse quilt Loader data
+      if (jsonObject.get("quilt_loader") != null) {
+        JsonObject quiltLoaderObject = jsonObject.get("quilt_loader").getAsJsonObject();
+        if (quiltLoaderObject != null) {
 
-        // Parse quilt Loader data
-        if (jsonObject != null && jsonObject.get("quilt_loader") != null) {
-          JsonObject quiltLoaderObject = jsonObject.get("quilt_loader").getAsJsonObject();
-          if (quiltLoaderObject != null) {
+          // Parse mod id
+          if (quiltLoaderObject.get("id") != null) {
             id = quiltLoaderObject.get("id").getAsString();
+          }
 
-            // Parse version number
-            if (quiltLoaderObject.get("version") != null
-                && !quiltLoaderObject.get("version").getAsString().startsWith("${")) {
-              version =
-                  SemanticVersionUtils.parseVersion(quiltLoaderObject.get("version").getAsString());
-            }
+          // Parse version number
+          if (quiltLoaderObject.get("version") != null
+              && !quiltLoaderObject.get("version").getAsString().startsWith("${")) {
+            version =
+                SemanticVersionUtils.parseVersion(quiltLoaderObject.get("version").getAsString());
+          }
 
-            // Parse meta data
-            if (quiltLoaderObject.get("metadata") != null) {
-              JsonObject metadataObject = quiltLoaderObject.get("metadata").getAsJsonObject();
-              if (metadataObject != null) {
-                name = metadataObject.get("name").getAsString();
-              }
+          // Parse meta data
+          if (quiltLoaderObject.get("metadata") != null) {
+            JsonObject metadataObject = quiltLoaderObject.get("metadata").getAsJsonObject();
+            if (metadataObject != null) {
+              name = metadataObject.get("name").getAsString();
             }
           }
         }
+      }
 
-        // Parse Minecraft data and environment
-        if (jsonObject != null && jsonObject.get("minecraft") != null) {
-          JsonObject minecraftObject = jsonObject.get("minecraft").getAsJsonObject();
-          if (minecraftObject != null && minecraftObject.get("environment") != null) {
-            String environmentString = minecraftObject.get("environment").getAsString();
-            environment =
-                switch (environmentString) {
-                  case "client" -> ModEnvironment.CLIENT;
-                  case "dedicated_server" -> ModEnvironment.SERVER;
-                  case "*" -> ModEnvironment.DEFAULT;
-                  default -> environment;
-                };
-          }
+      // Parse Minecraft data and environment
+      if (jsonObject.get("minecraft") != null) {
+        JsonObject minecraftObject = jsonObject.get("minecraft").getAsJsonObject();
+        if (minecraftObject != null && minecraftObject.get("environment") != null) {
+          String environmentString = minecraftObject.get("environment").getAsString();
+          environment =
+              switch (environmentString) {
+                case "client" -> ModEnvironment.CLIENT;
+                case "dedicated_server" -> ModEnvironment.SERVER;
+                case "*" -> ModEnvironment.DEFAULT;
+                default -> environment;
+              };
         }
-
-      } catch (Exception e) {
-        Constants.LOG.error("Was unable to read mods file {} from {}:", modsFile, path, e);
       }
     } else {
       Constants.LOG.warn("⚠ Found no quilt.mod.json file for {}!", path);
@@ -476,38 +475,43 @@ public class ModFileParser {
     LocalDateTime timestamp = ModFileData.EMPTY_TIMESTAMP;
 
     // Parse fabric.mod.json file
-    ZipEntry modsFile = jarFile.getEntry("fabric.mod.json");
-    if (modsFile != null && !modsFile.isDirectory()) {
-      try (InputStream inputStream = jarFile.getInputStream(modsFile)) {
-        JsonElement jsonElement = JsonParser.parseReader(new InputStreamReader(inputStream));
-        JsonObject jsonObject = jsonElement.getAsJsonObject();
-        if (jsonObject != null) {
-          id = jsonObject.get("id").getAsString();
-          name = jsonObject.get("name").getAsString();
+    JsonObject jsonObject = JsonFileParser.readJsonFile(jarFile, Path.of("fabric.mod.json"));
+    if (jsonObject != null && !jsonObject.isJsonNull()) {
+      // Parse mod id
+      if (jsonObject.get("id") != null) {
+        id = jsonObject.get("id").getAsString();
+      } else {
+        Constants.LOG.warn("⚠ Found no id tag inside the fabric.mod.json file {}!", path);
+      }
 
-          // Parse version number
-          if (jsonObject.get("version") != null
-              && !jsonObject.get("version").getAsString().startsWith("${")) {
-            version = SemanticVersionUtils.parseVersion(jsonObject.get("version").getAsString());
-          }
+      // Parse mod name
+      if (jsonObject.get("name") != null) {
+        name = jsonObject.get("name").getAsString();
+      } else {
+        Constants.LOG.warn("⚠ Found no name tag inside the fabric.mod.json file {}!", path);
+      }
 
-          // Parse environment
-          if (jsonObject.get("environment") != null) {
-            String environmentString = jsonObject.get("environment").getAsString();
-            environment =
-                switch (environmentString) {
-                  case "client" -> ModEnvironment.CLIENT;
-                  case "server" -> ModEnvironment.SERVER;
-                  case "*" -> ModEnvironment.DEFAULT;
-                  default -> environment;
-                };
-          }
-        }
-      } catch (Exception e) {
-        Constants.LOG.error("Was unable to read mods file {} from {}:", modsFile, path, e);
+      // Parse version number
+      if (jsonObject.get("version") != null
+          && !jsonObject.get("version").getAsString().startsWith("${")) {
+        version = SemanticVersionUtils.parseVersion(jsonObject.get("version").getAsString());
+      } else {
+        Constants.LOG.warn("⚠ Found no version tag inside the fabric.mod.json file {}!", path);
+      }
+
+      // Parse environment
+      if (jsonObject.get("environment") != null) {
+        String environmentString = jsonObject.get("environment").getAsString();
+        environment =
+            switch (environmentString) {
+              case "client" -> ModEnvironment.CLIENT;
+              case "server" -> ModEnvironment.SERVER;
+              case "*" -> ModEnvironment.DEFAULT;
+              default -> environment;
+            };
       }
     } else {
-      Constants.LOG.warn("⚠ Found no fabric.mod.json file for {}!", path);
+      Constants.LOG.warn("⚠ Found no valid fabric.mod.json file for {}!", path);
     }
 
     // Add manifest information, if available.
