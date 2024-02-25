@@ -33,6 +33,8 @@ class ModDataTests {
   private final File testModFiles = new File("src/test/resources/testfile/mods");
   private final File testModBothSampleFiles =
       new File("src/test/resources/testfile/mods_sample/both");
+  private final File testModBrokenSampleFiles =
+      new File("src/test/resources/testfile/mods_sample/broken");
   private final File testModClientSampleFiles =
       new File("src/test/resources/testfile/mods_sample/client");
   private final File testModDatapackSampleFiles =
@@ -95,6 +97,16 @@ class ModDataTests {
     assertEquals(ModType.QUILT, quiltModFileData01.modType());
     assertEquals(ModEnvironment.CLIENT, quiltModFileData01.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, quiltModFileData01.id());
+  }
+
+  @Test
+  void testReadModInfo_Broken_Samples() {
+    ModFileData sampleModfileData01 =
+        ModData.readModInfo(
+            testModBrokenSampleFiles, "HopoBetterRuinedPortals-[1.19-1.19.3]-1.3.3.jar");
+    assertEquals(ModType.MIXED, sampleModfileData01.modType());
+    assertEquals(ModEnvironment.DATA_PACK, sampleModfileData01.environment());
+    assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModfileData01.id());
   }
 
   @Test
