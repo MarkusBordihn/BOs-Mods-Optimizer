@@ -41,6 +41,7 @@ public class ServerModsDatabase {
           "leaky",
           "publicguiannouncement",
           "quick-leaf-decay",
+          "respawninganimals",
           "simplebackups",
           "smoothchunk",
           "villagerdeathmessages");
