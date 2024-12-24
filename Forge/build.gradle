@@ -14,13 +14,13 @@ archivesBaseName = "${mod_id}-forge-${minecraft_version}"
 minecraft {
   mappings channel: 'official', version: minecraft_version
 
+  reobf = false
+  copyIdeResources = true
+
   runs {
     client {
       workingDirectory project.file('run')
-      ideaModule "${rootProject.name}.${project.name}.main"
       taskName 'Client'
-      property 'mixin.env.remapRefMap', 'true'
-      property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
       mods {
         modClientRun {
           source sourceSets.main
@@ -31,10 +31,7 @@ minecraft {
 
     server {
       workingDirectory project.file('run')
-      ideaModule "${rootProject.name}.${project.name}.main"
       taskName 'Server'
-      property 'mixin.env.remapRefMap', 'true'
-      property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
       mods {
         modServerRun {
           source sourceSets.main
@@ -45,11 +42,8 @@ minecraft {
 
     data {
       workingDirectory project.file('run')
-      ideaModule "${rootProject.name}.${project.name}.main"
       args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
       taskName 'Data'
-      property 'mixin.env.remapRefMap', 'true'
-      property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
       mods {
         modDataRun {
           source sourceSets.main
@@ -80,6 +74,8 @@ configurations {
 
 dependencies {
   minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+  // Include Common code
   compileOnly project(":Common")
 
   // Extra libraries
@@ -132,8 +128,6 @@ assemble.dependsOn shadowJar
 reobf {
   shadowJar {}
 }
-
-jar.finalizedBy('reobfJar')
 
 publishing {
   publications {
