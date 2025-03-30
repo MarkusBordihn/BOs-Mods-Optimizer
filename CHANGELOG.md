@@ -7,7 +7,7 @@ For the full changelog, please go to the [GitHub History][history] instead.
 
 ### v3.0.0
 
-- Fixed #32 by moving `Better Clouds Reforged` to the default mod list.
+- Fixed #32 by moving `Distant Horizons` to the default mod list.
 - Fixed #31 by adding `Better Clouds Reforged` to the client side mod list.
 - Fixed #30 by adding `Create: Fuel & Water Information` to the client side mod list.
 - Fixed #29 by adding `Elytra Utilities` to the client side mod list.
