@@ -27,12 +27,12 @@ public class ServerModsDatabase {
   /** List of server side mods, which are confirmed to be server-side only! */
   private static final List<String> serverSideModsList =
       Arrays.asList(
-          "adaptive_performance_tweaks",
           "adaptive_performance_tweaks_core",
           "adaptive_performance_tweaks_gamerules",
           "adaptive_performance_tweaks_items",
           "adaptive_performance_tweaks_player",
           "adaptive_performance_tweaks_spawn",
+          "adaptive_performance_tweaks",
           "alternate-current",
           "chunk-sending-forge-fabric",
           "deathbackup",

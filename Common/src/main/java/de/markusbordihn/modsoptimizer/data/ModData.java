@@ -76,60 +76,55 @@ public class ModData {
         modPath,
         fileExtension);
     for (File modFile : modsFiles) {
+      // Check for mod file based on the file extension.
       String modFileName = modFile.getName();
-      if (modFileName.endsWith(fileExtension)) {
-        ModFileData modFileData = readModInfo(modFile);
-        if (modFileData != null && modFileData.id() != null && !modFileData.id().isEmpty()) {
-
-          // Check for duplicated mods.
-          if (!modFileData.id().equals(ModFileData.EMPTY_MOD_ID)) {
-            if (knownModsMap.containsKey(modFileData.id())) {
-              Constants.LOG.error(
-                  "{} ⚠ Duplicated mod {} found in {} and {}",
-                  LOG_PREFIX,
-                  modFileData.id(),
-                  modFileData.path(),
-                  knownModsMap.get(modFileData.id()).path());
-              if (!duplicatedModsMap.containsKey(modFileData.id())) {
-                duplicatedModsMap.put(modFileData.id(), new HashSet<>());
-              }
-              duplicatedModsMap.get(modFileData.id()).add(modFileData);
-              duplicatedModsMap.get(modFileData.id()).add(knownModsMap.get(modFileData.id()));
-            } else {
-              knownModsMap.put(modFileData.id(), modFileData);
-            }
-          }
-
-          // Add mods to environment specific mod list.
-          if (modFileData.environment() == ModEnvironment.CLIENT) {
-            clientModsSet.add(modFileData);
-          } else if (modFileData.environment() == ModEnvironment.SERVER) {
-            serverModsSet.add(modFileData);
-          } else if (modFileData.environment() == ModEnvironment.SERVICE) {
-            serviceModsSet.add(modFileData);
-          } else if (modFileData.environment() == ModEnvironment.LIBRARY) {
-            libraryModsSet.add(modFileData);
-          } else if (modFileData.environment() == ModEnvironment.LANGUAGE_PROVIDER) {
-            languageProviderModsSet.add(modFileData);
-          } else if (modFileData.environment() == ModEnvironment.DATA_PACK) {
-            dataPackModsSet.add(modFileData);
-          } else {
-            defaultModsSet.add(modFileData);
-          }
-        } else {
-          Constants.LOG.error(
-              "{} ⚠ Unable to parse mod file {} in {}",
-              LOG_PREFIX,
-              modFileName,
-              modFile.getAbsolutePath());
-        }
-      } else {
+      if (!modFileName.endsWith(fileExtension)) {
         Constants.LOG.debug(
             "{} ⚠ Ignore mod file {} in {} with file extension {}",
             LOG_PREFIX,
             modFileName,
             modFile.getAbsolutePath(),
             fileExtension);
+        continue;
+      }
+
+      // Check for mod file based on the mod information.
+      ModFileData modFileData = readModInfo(modFile);
+      if (modFileData == null || modFileData.id() == null || modFileData.id().isEmpty()) {
+        Constants.LOG.error(
+            "{} ⚠ Unable to parse mod file {} in {}",
+            LOG_PREFIX,
+            modFileName,
+            modFile.getAbsolutePath());
+        continue;
+      }
+
+      // Check for duplicated mods.
+      if (!modFileData.id().equals(ModFileData.EMPTY_MOD_ID)) {
+        if (knownModsMap.containsKey(modFileData.id())) {
+          Constants.LOG.error(
+              "{} ⚠ Duplicated mod {} found in {} and {}",
+              LOG_PREFIX,
+              modFileData.id(),
+              modFileData.path(),
+              knownModsMap.get(modFileData.id()).path());
+          duplicatedModsMap
+              .computeIfAbsent(modFileData.id(), k -> new HashSet<>())
+              .addAll(Set.of(modFileData, knownModsMap.get(modFileData.id())));
+        } else {
+          knownModsMap.put(modFileData.id(), modFileData);
+        }
+      }
+
+      // Add mods to environment specific mod list.
+      switch (modFileData.environment()) {
+        case CLIENT -> clientModsSet.add(modFileData);
+        case SERVER -> serverModsSet.add(modFileData);
+        case SERVICE -> serviceModsSet.add(modFileData);
+        case LIBRARY -> libraryModsSet.add(modFileData);
+        case LANGUAGE_PROVIDER -> languageProviderModsSet.add(modFileData);
+        case DATA_PACK -> dataPackModsSet.add(modFileData);
+        default -> defaultModsSet.add(modFileData);
       }
     }
 
@@ -138,61 +133,21 @@ public class ModData {
   }
 
   private static void showStats() {
-    if (!duplicatedModsMap.isEmpty()) {
+    logStats("duplicated", duplicatedModsMap.size(), !duplicatedModsMap.isEmpty());
+    logStats(
+        "language provider", languageProviderModsSet.size(), !languageProviderModsSet.isEmpty());
+    logStats("library", libraryModsSet.size(), !libraryModsSet.isEmpty());
+    logStats("data pack", dataPackModsSet.size(), !dataPackModsSet.isEmpty());
+    logStats("client", clientModsSet.size(), !clientModsSet.isEmpty());
+    logStats("server", serverModsSet.size(), !serverModsSet.isEmpty());
+    logStats("service", serviceModsSet.size(), !serviceModsSet.isEmpty());
+    logStats("default", defaultModsSet.size(), !defaultModsSet.isEmpty());
+  }
+
+  private static void logStats(String type, int size, boolean condition) {
+    if (condition) {
       Constants.LOG.info(
-          "{} ⚠ Found {} duplicated mods in {} mods.",
-          LOG_PREFIX,
-          duplicatedModsMap.size(),
-          knownModsMap.size());
-    }
-    if (!languageProviderModsSet.isEmpty()) {
-      Constants.LOG.info(
-          "{} Found {} language provider mods in {} mods.",
-          LOG_PREFIX,
-          languageProviderModsSet.size(),
-          knownModsMap.size());
-    }
-    if (!libraryModsSet.isEmpty()) {
-      Constants.LOG.info(
-          "{} Found {} library mods in {} mods.",
-          LOG_PREFIX,
-          libraryModsSet.size(),
-          knownModsMap.size());
-    }
-    if (!dataPackModsSet.isEmpty()) {
-      Constants.LOG.info(
-          "{} Found {} data pack mods in {} mods.",
-          LOG_PREFIX,
-          dataPackModsSet.size(),
-          knownModsMap.size());
-    }
-    if (!clientModsSet.isEmpty()) {
-      Constants.LOG.info(
-          "{} Found {} client mods in {} mods.",
-          LOG_PREFIX,
-          clientModsSet.size(),
-          knownModsMap.size());
-    }
-    if (!serverModsSet.isEmpty()) {
-      Constants.LOG.info(
-          "{} Found {} server mods in {} mods.",
-          LOG_PREFIX,
-          serverModsSet.size(),
-          knownModsMap.size());
-    }
-    if (!serviceModsSet.isEmpty()) {
-      Constants.LOG.info(
-          "{} Found {} service mods in {} mods.",
-          LOG_PREFIX,
-          serviceModsSet.size(),
-          knownModsMap.size());
-    }
-    if (!defaultModsSet.isEmpty()) {
-      Constants.LOG.info(
-          "{} Found {} default mods in {} mods.",
-          LOG_PREFIX,
-          defaultModsSet.size(),
-          knownModsMap.size());
+          "{} Found {} {} mods in {} mods.", LOG_PREFIX, size, type, knownModsMap.size());
     }
   }
 
