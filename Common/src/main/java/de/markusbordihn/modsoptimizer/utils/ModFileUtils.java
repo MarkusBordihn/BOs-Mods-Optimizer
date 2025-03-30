@@ -43,17 +43,16 @@ public class ModFileUtils {
   }
 
   public static boolean deleteModFile(File file) {
-    if (file == null) {
-      return false;
-    }
-    if (file.isDirectory()) {
+    if (file == null || file.isDirectory()) {
       log.error(
-          "{} ⚠ Was unable to delete mod file {}, because it's an directory!", LOG_PREFIX, file);
+          "{} ⚠ Was unable to delete mod file {}, because it's {}!",
+          LOG_PREFIX,
+          file,
+          file == null ? "null" : "a directory");
       return false;
     }
-    Path filePath = file.toPath();
     try {
-      return Files.deleteIfExists(filePath);
+      return Files.deleteIfExists(file.toPath());
     } catch (IOException e) {
       log.error("{} ⚠ Was unable to delete mod file {}, because of: {}", LOG_PREFIX, file, e);
       return false;

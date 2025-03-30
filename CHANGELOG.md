@@ -5,6 +5,21 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v3.0.0
+
+- Fixed #32 by moving `Distant Horizons` to the default mod list.
+- Fixed #31 by adding `Better Clouds Reforged` to the client side mod list.
+- Fixed #30 by adding `Create: Fuel & Water Information` to the client side mod list.
+- Fixed #29 by adding `Elytra Utilities` to the client side mod list.
+- Fixed #28 by adding `Fog` to the client side mod list.
+- Fixed #27 by adding `Inventory Tweaks - Refoxed` to default mod list.
+- Fixed #26 by adding `Better Grassify` to the client side mod list.
+- Fixed #25 by adding `Better Clouds` to the client side mod list.
+- Fixed #23 by adding `Sodium` related mods to the client side mod list.
+- Fixed duplicated key crash within the `config.toml` file.
+- Added pre-check for `config.toml` file to avoid crashes on invalid list entries.
+- Improved code quality and fixed smaller issues.
+
 ### v2.0.0
 
 - Added JSON parse with additional checks, to avoid crashes on invalid .json files. #17

@@ -121,32 +121,28 @@ public class ModFileParser {
 
   public static ModFileData parseModFile(Manifest manifest, Path path, JarFile jarFile) {
     ModType modType = getModTypeByFile(manifest, jarFile);
-    if (modType == ModType.FORGE) {
-      return ModFileParser.parseForgeModFile(manifest, path, jarFile);
-    } else if (modType == ModType.NEOFORGE) {
-      return ModFileParser.parseNeoForgeModFile(manifest, path, jarFile);
-    } else if (modType == ModType.FABRIC) {
-      return ModFileParser.parseFabricModFile(manifest, path, jarFile);
-    } else if (modType == ModType.QUILT) {
-      return ModFileParser.parseQuiltModFile(manifest, path, jarFile);
-    } else if (modType == ModType.MIXED) {
-      return ModFileParser.parseMixedModFile(manifest, path, jarFile);
-    }
-
-    Constants.LOG.error(
-        "⚠ Found unknown mod type {} for mod file {} with manifest {}!",
-        modType,
-        jarFile.getName(),
-        manifest != null ? manifest.getMainAttributes() : null);
-
-    return new ModFileData(
-        path,
-        ModFileData.EMPTY_MOD_ID,
-        modType,
-        ModFileData.EMPTY_MOD_NAME,
-        ModFileData.EMPTY_VERSION,
-        ModEnvironment.DEFAULT,
-        ModFileData.EMPTY_TIMESTAMP);
+    return switch (modType) {
+      case FORGE -> ModFileParser.parseForgeModFile(manifest, path, jarFile);
+      case NEOFORGE -> ModFileParser.parseNeoForgeModFile(manifest, path, jarFile);
+      case FABRIC -> ModFileParser.parseFabricModFile(manifest, path, jarFile);
+      case QUILT -> ModFileParser.parseQuiltModFile(manifest, path, jarFile);
+      case MIXED -> ModFileParser.parseMixedModFile(manifest, path, jarFile);
+      default -> {
+        Constants.LOG.error(
+            "⚠ Found unknown mod type {} for mod file {} with manifest {}!",
+            modType,
+            jarFile.getName(),
+            manifest != null ? manifest.getMainAttributes() : null);
+        yield new ModFileData(
+            path,
+            ModFileData.EMPTY_MOD_ID,
+            modType,
+            ModFileData.EMPTY_MOD_NAME,
+            ModFileData.EMPTY_VERSION,
+            ModEnvironment.DEFAULT,
+            ModFileData.EMPTY_TIMESTAMP);
+      }
+    };
   }
 
   public static ModFileData parseMixedModFile(Manifest manifest, Path path, JarFile jarFile) {
