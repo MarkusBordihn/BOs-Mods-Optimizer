@@ -3,46 +3,59 @@
 
 ![Mods Optimizer][logo]
 
-## Please read before using ⚠️
+# ⚠️ Please Read Before Using
 
-This mod is renaming / moving your mod files, for this reason it is important that you have regular
-backups in place.
-I will do my best to implement corresponding safety features to avoid possible issues, but I'm not
-able to cover all use cases.
+**Mods Optimizer** will **rename or move files** inside your `mods` folder.  
+➡️ **Make sure to keep regular backups** of your modpack and server files.  
+While the mod includes safety checks, it cannot cover every possible edge case.
 
-## 👾Automatic Server Bundle (one mod pack for client/server)
+## 👾 Automatic Server Bundle Support
 
-This mod automatically disable mods which are incompatible or not needed on the server side.
-There is no longer the need to have a separated "server" and "client" mod pack only for the mods.
+Mods Optimizer automatically disables mods that are **client-only** or **incompatible with servers
+**.  
+You no longer need to maintain separate `client` and `server` modpacks!
 
-## 👾 Automatic Mod Cleanup
+- ✅ One modpack works for both client and server
+- 🚫 No more guesswork or duplicate maintenance
 
-This mod automatically clean up duplicated files, by removing older versions.
-This is helpful to avoid duplication issues and manual deleting of older versions.
+## 🧹 Automatic Mod Cleanup
 
-## How to use the mod ?
+Tired of cleaning out old versions manually?
 
-Just add the mod to your mod pack and during the start on a Minecraft Client or a Minecraft Server
-it will automatically optimize the mods in the mod folder.
+Mods Optimizer detects and removes **duplicate mod versions** during startup.  
+This helps keep your `mods` folder clean and prevents version conflicts.
 
-If the mod is used on a server all client related mods will be automatically renamed to "
-???.client".
-The mod is mostly helpful if it is used on the server and the client side.
+- 🗑 Removes outdated mod files
+- ✅ Keeps only the latest version
 
-## Fabric Support ?
+## 🚀 How to Use the Mod
 
-Unfortunately Fabric is not supporting loading any mods / code after the `GameProvider` but before
-the Fabric Mod Loader, for this reason we are currently not able to support Fabric as long as this
-is not changed.
+1. Add **Mods Optimizer** to your modpack (client and/or server).
+2. On game or server startup, it will automatically:
+    - 🔍 Scan the `mods` folder
+    - 🔄 Classify mods by side (client/server)
+    - 🧼 Remove duplicates
+    - 🚫 Rename client-only mods on servers to `???.client`
 
-## Example Mod Pack
+**Tip:** For best results, use this mod on **both client and server**.
 
-If you want to see this mod in action, please take a look at:
-https://www.curseforge.com/minecraft/modpacks/bos-adventure-world
+## 🧵 Fabric Support?
+
+Currently, **Fabric is not supported**.  
+Fabric does not allow mods to run **after the GameProvider but before the Mod Loader**, which
+prevents Mods Optimizer from functioning correctly.
+
+> ❗ Support may be added in the future if Fabric changes this behavior.
+
+## 🧪 Example Modpack
+
+Want to see Mods Optimizer in action?  
+Check out the BOS Adventure World modpack:  
+👉 [BOS Adventure World on CurseForge](https://www.curseforge.com/minecraft/modpacks/bos-adventure-world)
 
 ## ℹ️ More Information
 
-Please take a look at our wiki https://github.com/MarkusBordihn/BOs-Mods-Optimizer/wiki for
-additional information.
+For full documentation, usage tips, and FAQs:  
+📖 Visit the [Mods Optimizer Wiki](https://github.com/MarkusBordihn/BOs-Mods-Optimizer/wiki)
 
 [logo]: Common/src/main/resources/logo.png

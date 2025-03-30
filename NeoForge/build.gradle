@@ -84,14 +84,14 @@ jar {
   archiveClassifier = 'slim'
   manifest {
     attributes([
-        "FMLModType"              : "LIBRARY",
-        "Specification-Title"     : "${project.mod_name}",
-        "Specification-Vendor"    : "${project.vendor_name}",
-        "Specification-Version"   : "1",
-        "Implementation-Title"    : project.name,
-        "Implementation-Version"  : "${project.version}",
-        "Implementation-Vendor"   : "${project.mod_id}",
-        "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+            "FMLModType"              : "LIBRARY",
+            "Specification-Title"     : "${project.mod_name}",
+            "Specification-Vendor"    : "${project.vendor_name}",
+            "Specification-Version"   : "1",
+            "Implementation-Title"    : project.name,
+            "Implementation-Version"  : "${project.version}",
+            "Implementation-Vendor"   : "${project.mod_id}",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
     ])
   }
   finalizedBy shadowJar
@@ -145,7 +145,9 @@ modrinth {
   token = "${credentials.forKey('modrinth_api_token')}"
   projectId = "${modrinth_project_id}"
   versionNumber = "${version}"
+  changelog = file("../CHANGELOG.md").text
   versionType = "${modrinth_release_type}"
+  versionName = "${mod_name} ${version}"
   uploadFile = shadowJar
   gameVersions = ["${minecraft_version}"]
   loaders = ["neoforge"]
