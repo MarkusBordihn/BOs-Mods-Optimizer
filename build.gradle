@@ -33,7 +33,7 @@ subprojects {
   }
 
   tasks.register('wrapper', Wrapper) {
-    gradleVersion = '8.8'
+    gradleVersion = '8.11'
   }
 
   tasks.withType(JavaCompile).configureEach {
