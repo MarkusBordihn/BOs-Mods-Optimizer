@@ -173,7 +173,9 @@ modrinth {
   token = "${credentials.forKey('modrinth_api_token')}"
   projectId = "${modrinth_project_id}"
   versionNumber = "${version}"
+  changelog = file("../CHANGELOG.md").text
   versionType = "${modrinth_release_type}"
+  versionName = "${mod_name} ${version}"
   uploadFile = shadowJar
   gameVersions = ["${minecraft_version}"]
   loaders = ["forge"]
