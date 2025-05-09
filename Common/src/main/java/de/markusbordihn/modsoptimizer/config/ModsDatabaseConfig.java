@@ -118,7 +118,7 @@ public class ModsDatabaseConfig {
       String trimmed = line.trim();
 
       // Keep comments and empty lines
-      if (trimmed.isEmpty() || trimmed.startsWith("#") || !trimmed.contains("=")) {
+      if (trimmed.startsWith("#") || !trimmed.contains("=")) {
         cleanedToml.append(line).append("\n");
         continue;
       }
@@ -160,22 +160,28 @@ public class ModsDatabaseConfig {
       String cleanedToml = cleanTomlFileWithWarnings(file);
       Map<String, Object> config = new Toml().read(cleanedToml).toMap();
 
-      // Read database options from config file.
       if (config.containsKey("Database")) {
-        Map<String, String> database = (Map<String, String>) config.get("Database");
-        if (database.containsKey(ALLOW_REMOTE_DATABASE)) {
-          allowRemoteDatabase = Boolean.parseBoolean(database.get(ALLOW_REMOTE_DATABASE));
+        Object databaseObject = config.get("Database");
+        if (databaseObject instanceof Map<?, ?> database) {
+          Object allowRemoteDatabaseValue = database.get(ALLOW_REMOTE_DATABASE);
+          if (allowRemoteDatabaseValue instanceof String stringValue) {
+            allowRemoteDatabase = Boolean.parseBoolean(stringValue);
+          }
         }
       }
 
       // Read debug options from config file.
       if (config.containsKey("Debug")) {
-        Map<String, String> debug = (Map<String, String>) config.get("Debug");
-        if (debug.containsKey(DEBUG_ENABLED)) {
-          debugEnabled = Boolean.parseBoolean(debug.get(DEBUG_ENABLED));
-        }
-        if (debug.containsKey(DEBUG_FORCE_SIDE)) {
-          debugForceSide = debug.get(DEBUG_FORCE_SIDE);
+        Object debugObject = config.get("Debug");
+        if (debugObject instanceof Map<?, ?> debugMap) {
+          Object debugEnabledValue = debugMap.get(DEBUG_ENABLED);
+          if (debugEnabledValue instanceof String stringValue) {
+            debugEnabled = Boolean.parseBoolean(stringValue);
+          }
+          Object debugForceSideValue = debugMap.get(DEBUG_FORCE_SIDE);
+          if (debugForceSideValue instanceof String stringValue) {
+            debugForceSide = stringValue;
+          }
         }
       }
     } catch (Exception exception) {

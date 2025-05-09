@@ -41,6 +41,8 @@ import java.util.TreeMap;
 
 public class ModsDatabaseUpdater {
 
+  private static final String LOG_PREFIX = "[Mods Database Updater]";
+
   private static final Path CONFIG_DIR =
       Paths.get("").toAbsolutePath().resolve("config").resolve(Constants.MOD_ID);
   private static final Path LOCAL_FILE = CONFIG_DIR.resolve("mods-database.json");
@@ -58,90 +60,104 @@ public class ModsDatabaseUpdater {
         Instant lastModified = Files.getLastModifiedTime(LOCAL_FILE).toInstant();
         if (isManuallyModified(LOCAL_FILE)) {
           Constants.LOG.info(
-              "🛑 Local mods-database.json was modified by user, skipping remote update.");
+              "{} 🛑 Local mods-database.json was modified by user, skipping remote update.",
+              LOG_PREFIX);
           return;
         }
 
         if (lastModified.plus(Duration.ofHours(CACHE_MAX_AGE_HOURS)).isAfter(Instant.now())) {
           Constants.LOG.info(
-              "⏳ Local mods-database.json is still fresh (last update: {}).", lastModified);
+              "{} ⏳ Local mods-database.json is still fresh (last update: {}).",
+              LOG_PREFIX,
+              lastModified);
           return;
         }
 
-        Constants.LOG.info("🔄 Local mods-database.json is outdated, fetching from remote …");
+        Constants.LOG.info(
+            "{} 🔄 Local mods-database.json is outdated, fetching from remote …", LOG_PREFIX);
       }
 
-      try (InputStream in = new URL(REMOTE_URL).openStream()) {
-        Files.copy(in, LOCAL_FILE, StandardCopyOption.REPLACE_EXISTING);
+      try (InputStream inputStream = new URL(REMOTE_URL).openStream()) {
+        Files.copy(inputStream, LOCAL_FILE, StandardCopyOption.REPLACE_EXISTING);
         String newHash = calculateSha256(LOCAL_FILE);
         Files.writeString(
             LOCAL_FILE.resolveSibling("mods-database.json.sha256"),
             newHash,
             StandardCharsets.UTF_8);
-        Constants.LOG.info("✅ Updated mods-database.json and saved SHA-256 hash.");
+        Constants.LOG.info(
+            "{} ✅ Fetched remote mods-database.json and saved SHA-256 hash.", LOG_PREFIX);
       }
 
     } catch (IOException e) {
-      Constants.LOG.warn("⚠ Failed to update mods-database.json: {}", e.getMessage());
+      Constants.LOG.warn(
+          "{} ⚠ Failed to update mods-database.json: {}", LOG_PREFIX, e.getMessage());
     }
   }
 
   public static JsonObject getModsDatabase() {
     // Read local mods-database.json
     if (Files.exists(LOCAL_FILE)) {
-      try (InputStream in = Files.newInputStream(LOCAL_FILE)) {
-        JsonObject json = parseAndValidate(in);
-        if (json != null) return json;
+      try (InputStream inputStream = Files.newInputStream(LOCAL_FILE)) {
+        JsonObject jsonObject = parseAndValidate(inputStream);
+        if (jsonObject != null) return jsonObject;
       } catch (IOException e) {
-        Constants.LOG.warn("⚠ Failed to read local mods-database.json: {}", e.getMessage());
+        Constants.LOG.warn(
+            "{} ⚠ Failed to read local mods-database.json: {}", LOG_PREFIX, e.getMessage());
       }
     }
 
     // Read fallback mods-database.json
-    try (InputStream in =
+    try (InputStream inputStream =
         ModsDatabaseUpdater.class.getClassLoader().getResourceAsStream("mods-database.json")) {
-      if (in != null) {
-        JsonObject json = parseAndValidate(in);
-        if (json != null) return json;
+      if (inputStream != null) {
+        JsonObject jsonObject = parseAndValidate(inputStream);
+        if (jsonObject != null) return jsonObject;
       }
     } catch (IOException e) {
-      Constants.LOG.warn("⚠ Failed to read fallback mods-database.json: {}", e.getMessage());
+      Constants.LOG.warn(
+          "{} ⚠ Failed to read fallback mods-database.json: {}", LOG_PREFIX, e.getMessage());
     }
 
-    Constants.LOG.error("❌ Could not load any valid mods-database.json!");
+    Constants.LOG.error("{} ❌ Could not load any valid mods-database.json!", LOG_PREFIX);
     return new JsonObject();
   }
 
-  public static Map<String, String> getSortedModDatabaseMap(JsonObject json) {
+  public static Map<String, String> getSortedModDatabaseMap(JsonObject jsonObject) {
     Map<String, String> modIdMap = new TreeMap<>();
-    if (json.has("client"))
-      json.getAsJsonArray("client").forEach(e -> modIdMap.put(e.getAsString(), "client"));
-    if (json.has("server"))
-      json.getAsJsonArray("server").forEach(e -> modIdMap.put(e.getAsString(), "server"));
-    if (json.has("both"))
-      json.getAsJsonArray("both").forEach(e -> modIdMap.put(e.getAsString(), "default"));
+    addEntriesToMap(jsonObject, "client", "client", modIdMap);
+    addEntriesToMap(jsonObject, "server", "server", modIdMap);
+    addEntriesToMap(jsonObject, "both", "default", modIdMap);
     return modIdMap;
   }
 
-  private static JsonObject parseAndValidate(InputStream in) {
-    try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-      JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+  private static void addEntriesToMap(
+      JsonObject jsonObject, String key, String value, Map<String, String> map) {
+    if (jsonObject.has(key)) {
+      jsonObject
+          .getAsJsonArray(key)
+          .forEach(jsonElement -> map.put(jsonElement.getAsString(), value));
+    }
+  }
+
+  private static JsonObject parseAndValidate(InputStream inputStream) {
+    try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+      JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
       for (String key : VALID_KEYS) {
-        if (!json.has(key) || !json.get(key).isJsonArray()) {
-          Constants.LOG.warn("⚠ Key '{}' missing or invalid in mods-database.json", key);
+        if (!jsonObject.has(key) || !jsonObject.get(key).isJsonArray()) {
+          Constants.LOG.warn(
+              "{} ⚠ Key '{}' missing or invalid in mods-database.json", LOG_PREFIX, key);
           return null;
         }
       }
-      return json;
+      return jsonObject;
     } catch (Exception e) {
-      Constants.LOG.warn("⚠ Failed to parse mods-database.json: {}", e.getMessage());
+      Constants.LOG.warn("{} ⚠ Failed to parse mods-database.json: {}", LOG_PREFIX, e.getMessage());
       return null;
     }
   }
 
   private static boolean isManuallyModified(Path path) {
     Path hashFile = path.resolveSibling(path.getFileName() + ".sha256");
-
     if (!Files.exists(path) || !Files.exists(hashFile)) {
       return false;
     }
@@ -151,31 +167,33 @@ public class ModsDatabaseUpdater {
       String actualHash = calculateSha256(path);
       boolean modified = !expectedHash.equals(actualHash);
       if (modified) {
-        Constants.LOG.info("🛑 mods-database.json was modified (SHA-256 hash mismatch)");
+        Constants.LOG.info(
+            "{} 🛑 mods-database.json was modified (SHA-256 hash mismatch)", LOG_PREFIX);
       }
       return modified;
     } catch (IOException e) {
-      Constants.LOG.warn("⚠ Failed to check hash for {}: {}", path.getFileName(), e.getMessage());
+      Constants.LOG.warn(
+          "{} ⚠ Failed to check hash for {}: {}", LOG_PREFIX, path.getFileName(), e.getMessage());
       return false;
     }
   }
 
   private static String calculateSha256(Path file) throws IOException {
-    try (InputStream fis = Files.newInputStream(file)) {
+    try (InputStream inputStream = Files.newInputStream(file)) {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       byte[] buffer = new byte[8192];
       int bytesRead;
-      while ((bytesRead = fis.read(buffer)) != -1) {
+      while ((bytesRead = inputStream.read(buffer)) != -1) {
         digest.update(buffer, 0, bytesRead);
       }
       byte[] hashBytes = digest.digest();
-      StringBuilder sb = new StringBuilder();
+      StringBuilder stringBuilder = new StringBuilder();
       for (byte b : hashBytes) {
-        sb.append(String.format("%02x", b));
+        stringBuilder.append(String.format("%02x", b));
       }
-      return sb.toString();
+      return stringBuilder.toString();
     } catch (Exception e) {
-      throw new IOException("Unable to calculate SHA-256 hash", e);
+      throw new IOException(LOG_PREFIX + " Unable to calculate SHA-256 hash for " + file, e);
     }
   }
 }
