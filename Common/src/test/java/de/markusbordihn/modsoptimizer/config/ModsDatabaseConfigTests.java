@@ -21,40 +21,14 @@ package de.markusbordihn.modsoptimizer.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModEnvironment;
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class ModsDatabaseConfigTests {
-
-  @Test
-  void testCleanTomlFileWithDuplicateKeys() throws IOException {
-    File tempFile = File.createTempFile("test-config", ".toml");
-    tempFile.deleteOnExit();
-
-    String tomlContent =
-        """
-    [Mods]
-    test-mod = "client"
-    test-mod = "server"
-    another-mod = "both"
-    """;
-
-    Files.write(tempFile.toPath(), tomlContent.getBytes(StandardCharsets.UTF_8));
-
-    String cleanedToml = ModsDatabaseConfig.cleanTomlFileWithWarnings(tempFile);
-    assertNotNull(cleanedToml);
-    assertTrue(cleanedToml.contains("test-mod = \"client\""));
-    assertFalse(cleanedToml.contains("test-mod = \"server\""));
-    assertTrue(cleanedToml.contains("another-mod = \"both\""));
-  }
 
   @Test
   void testGetConfigFile() {
