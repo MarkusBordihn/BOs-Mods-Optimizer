@@ -5,6 +5,13 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v4.0.0
+
+- Fixed #37 by adding `AttributeFix`, `Emojiful` and `BetterBurning` to the both mod lists.
+- Fixed #36 by adding `zume` to client side mod list.
+- Added remote mods database sync for automatic updates, as long the `mods-database.json` file is
+  not modified.
+
 ### v3.0.0
 
 - Fixed #32 by moving `Better Clouds Reforged` to the default mod list.
