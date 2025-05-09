@@ -15,6 +15,7 @@
     "leaky",
     "publicguiannouncement",
     "quick-leaf-decay",
+    "server_side_mod_id",
     "simplebackups",
     "smoothchunk",
     "villagerdeathmessages"
@@ -85,6 +86,7 @@
     "clearwater",
     "client-crafting",
     "client-tweaks",
+    "client_side_mod_id",
     "clienttweaks",
     "colormatic",
     "connectedness",
@@ -317,6 +319,7 @@
     "attributefix",
     "betterburning",
     "betterstrongholds",
+    "default_side_mod_id",
     "distanthorizons",
     "easy_mob_farm",
     "easy_npc",
