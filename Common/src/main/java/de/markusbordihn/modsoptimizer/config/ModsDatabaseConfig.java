@@ -19,12 +19,10 @@
 
 package de.markusbordihn.modsoptimizer.config;
 
+import com.google.gson.JsonObject;
 import com.moandjiezana.toml.Toml;
 import com.moandjiezana.toml.TomlWriter;
 import de.markusbordihn.modsoptimizer.Constants;
-import de.markusbordihn.modsoptimizer.config.database.ClientModsDatabase;
-import de.markusbordihn.modsoptimizer.config.database.DefaultModsDatabase;
-import de.markusbordihn.modsoptimizer.config.database.ServerModsDatabase;
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModEnvironment;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -40,29 +38,42 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 public class ModsDatabaseConfig {
 
   public static final Path CONFIG_PATH =
       Paths.get("").toAbsolutePath().resolve("config").resolve(Constants.MOD_ID);
 
+  public static final String ALLOW_REMOTE_DATABASE = "allowRemoteDatabase";
   public static final String DEBUG_ENABLED = "debugEnabled";
   public static final String DEBUG_FORCE_SIDE = "debugForceSide";
   public static final String CONFIG_FILE_NAME = "config.toml";
   private static final Map<String, String> modsMap = new HashMap<>();
+  private static boolean allowRemoteDatabase = true;
   private static boolean debugEnabled = false;
   private static String debugForceSide = "default";
 
   static {
-    // Create config file if not exists.
+    // Create config file if not exists and read config file.
     File configFile = getConfigFile();
     if (configFile == null || !configFile.exists()) {
       configFile = createConfigFile(configFile);
     }
-
-    // Read config file.
     readConfigFile(configFile);
+
+    // Create mods database file if not exists.
+    if (allowRemoteDatabase) {
+      ModsDatabaseUpdater.updateFromRemoteIfNeeded();
+    }
+    JsonObject json = ModsDatabaseUpdater.getModsDatabase();
+    modsMap.putAll(ModsDatabaseUpdater.getSortedModDatabaseMap(json));
+    Constants.LOG.info(
+        "{} Mods Database Config File loaded with {} mods client: {}, server: {}, default: {}.",
+        Constants.MOD_NAME,
+        modsMap.size(),
+        modsMap.values().stream().filter(modType -> modType.equals("client")).count(),
+        modsMap.values().stream().filter(modType -> modType.equals("server")).count(),
+        modsMap.values().stream().filter(modType -> modType.equals("default")).count());
   }
 
   protected ModsDatabaseConfig() {}
@@ -107,7 +118,7 @@ public class ModsDatabaseConfig {
       String trimmed = line.trim();
 
       // Keep comments and empty lines
-      if (trimmed.isEmpty() || trimmed.startsWith("#") || !trimmed.contains("=")) {
+      if (trimmed.startsWith("#") || !trimmed.contains("=")) {
         cleanedToml.append(line).append("\n");
         continue;
       }
@@ -149,27 +160,28 @@ public class ModsDatabaseConfig {
       String cleanedToml = cleanTomlFileWithWarnings(file);
       Map<String, Object> config = new Toml().read(cleanedToml).toMap();
 
-      // Read mods from config file.
-      if (config.containsKey("Mods")) {
-        Map<String, String> mods = (Map<String, String>) config.get("Mods");
-        for (Map.Entry<String, String> entry : mods.entrySet()) {
-          String modId = entry.getKey();
-          String modType = entry.getValue();
-          if (modId == null || modId.isEmpty() || modType == null || modType.isEmpty()) {
-            continue;
+      if (config.containsKey("Database")) {
+        Object databaseObject = config.get("Database");
+        if (databaseObject instanceof Map<?, ?> database) {
+          Object allowRemoteDatabaseValue = database.get(ALLOW_REMOTE_DATABASE);
+          if (allowRemoteDatabaseValue instanceof String stringValue) {
+            allowRemoteDatabase = Boolean.parseBoolean(stringValue);
           }
-          modsMap.put(modId, modType);
         }
       }
 
       // Read debug options from config file.
       if (config.containsKey("Debug")) {
-        Map<String, String> debug = (Map<String, String>) config.get("Debug");
-        if (debug.containsKey(DEBUG_ENABLED)) {
-          debugEnabled = Boolean.parseBoolean(debug.get(DEBUG_ENABLED));
-        }
-        if (debug.containsKey(DEBUG_FORCE_SIDE)) {
-          debugForceSide = debug.get(DEBUG_FORCE_SIDE);
+        Object debugObject = config.get("Debug");
+        if (debugObject instanceof Map<?, ?> debugMap) {
+          Object debugEnabledValue = debugMap.get(DEBUG_ENABLED);
+          if (debugEnabledValue instanceof String stringValue) {
+            debugEnabled = Boolean.parseBoolean(stringValue);
+          }
+          Object debugForceSideValue = debugMap.get(DEBUG_FORCE_SIDE);
+          if (debugForceSideValue instanceof String stringValue) {
+            debugForceSide = stringValue;
+          }
         }
       }
     } catch (Exception exception) {
@@ -182,34 +194,9 @@ public class ModsDatabaseConfig {
         .append("# This file was auto-generated by ")
         .append(Constants.MOD_NAME)
         .append("\n")
-        .append("#\n")
-        .append("# This file contains a list of known client and server side mods.\n")
-        .append("# Most of the mods in this list using the wrong signals or are not\n")
-        .append("# compatible with the dedicated server.\n")
-        .append("#\n")
-        .append(
-            "# If your mod is included in this list, please refer to the following documentation for guidance:\n")
-        .append(
-            "# This documentation will assist you in supporting automatic detection of the correct side:\n")
-        .append(
-            "# https://github.com/MarkusBordihn/BOs-Mods-Optimizer/wiki/Define-the-correct-environment-for-a-Mod\n")
-        .append("#\n")
-        .append("# Add additional mod ids and their correct environment, if needed.\n")
-        .append("# Remove mod ids, if they are not needed anymore or\n")
-        .append("# use mod_id=\"default\" to disable any optimization for them.\n")
-        .append("#\n")
         .append("# Last update: ")
         .append(LocalDateTime.now())
-        .append("\n")
-        .append(
-            "# Note: To automatic update this file after an mod update, just delete the file.\n")
-        .append(
-            "# Normally you only need to update this file, if you run into problems with specific mods.\n")
-        .append("\n")
-        .append("[Mods]\n")
-        .append("client_side_mod_id=\"client\"\n")
-        .append("server_side_mod_id=\"server\"\n")
-        .append("default_side_mod_id=\"default\"\n");
+        .append("\n");
   }
 
   private static File createConfigFile(File file) {
@@ -223,27 +210,24 @@ public class ModsDatabaseConfig {
     OutputStream outputStream = new ByteArrayOutputStream();
     TomlWriter tomlWriter = new TomlWriter.Builder().build();
 
-    // Adds mods to the toml config.
-    Map<String, String> sortedModDatabaseMap = getSortedModDatabaseMap();
-    if (!sortedModDatabaseMap.isEmpty()) {
-      try {
-        tomlWriter.write(sortedModDatabaseMap, outputStream);
-        textContent.append(outputStream);
-      } catch (Exception exception) {
-        Constants.LOG.error(
-            "There was an error, adding the mods database to the config file {}:", file, exception);
-        return null;
-      }
-    } else {
-      Constants.LOG.warn("No mods found inside the built-in mods database!");
+    // Add database options.
+    Map<String, String> databaseOptions = new HashMap<>();
+    databaseOptions.put(ALLOW_REMOTE_DATABASE, allowRemoteDatabase ? "true" : "false");
+    try {
+      tomlWriter.write(databaseOptions, outputStream);
+      textContent.append("\n[Database]\n").append(outputStream);
+    } catch (Exception exception) {
+      Constants.LOG.error(
+          "There was an error, adding the database options to the config file {}:",
+          file,
+          exception);
+      return null;
     }
 
     // Define debug options.
     Map<String, String> debugOptions = new HashMap<>();
     debugOptions.put(DEBUG_ENABLED, debugEnabled ? "true" : "false");
     debugOptions.put(DEBUG_FORCE_SIDE, debugForceSide);
-
-    // Add debug options to the toml config.
     outputStream = new ByteArrayOutputStream();
     try {
       tomlWriter.write(debugOptions, outputStream);
@@ -263,25 +247,6 @@ public class ModsDatabaseConfig {
     }
 
     return file;
-  }
-
-  private static Map<String, String> getSortedModDatabaseMap() {
-    Map<String, String> modIdMap = new HashMap<>();
-    for (String modId : ClientModsDatabase.getClientSideModsList()) {
-      modIdMap.put(modId, "client");
-    }
-
-    // Add known server side mods to list.
-    for (String modId : ServerModsDatabase.getServerSideModsList()) {
-      modIdMap.put(modId, "server");
-    }
-
-    // Add known both side mods to list.
-    for (String modId : DefaultModsDatabase.getDefaultModsList()) {
-      modIdMap.put(modId, "default");
-    }
-
-    return new TreeMap<>(modIdMap);
   }
 
   public static File getConfigFile() {
