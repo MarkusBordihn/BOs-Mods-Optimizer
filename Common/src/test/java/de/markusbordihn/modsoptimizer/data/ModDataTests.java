@@ -110,9 +110,9 @@ class ModDataTests {
   }
 
   @Test
-  void testReadModInfo_NeoForge_Samples() {
+  void testReadRawModInfo_NeoForge_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readModInfo(testModClientSampleFiles, "appleskin-neoforge-mc1.20.2-2.5.1.jar");
+        ModData.readRawModInfo(testModClientSampleFiles, "appleskin-neoforge-mc1.20.2-2.5.1.jar");
     assertEquals(ModType.NEOFORGE, sampleModFileData01.modType());
     assertEquals(ModEnvironment.CLIENT, sampleModFileData01.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData01.id());
