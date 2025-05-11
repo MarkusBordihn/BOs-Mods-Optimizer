@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-05-10T19:00:00Z",
+  "lastUpdated": "2025-05-11T19:00:00Z",
   "server": [
     "adaptive_performance_tweaks_core",
     "adaptive_performance_tweaks_gamerules",
@@ -270,6 +270,7 @@
     "searchables",
     "shutupexperimentalsettings",
     "skyguide",
+    "smithingtemplateviewer",
     "smooth-swapping",
     "smoothboot",
     "sodium-extra",
