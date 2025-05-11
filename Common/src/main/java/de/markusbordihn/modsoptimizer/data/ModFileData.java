@@ -47,7 +47,7 @@ public record ModFileData(
   }
 
   public enum ModEnvironment {
-    DEFAULT,
+    BOTH,
     CLIENT,
     SERVER,
     SERVICE,

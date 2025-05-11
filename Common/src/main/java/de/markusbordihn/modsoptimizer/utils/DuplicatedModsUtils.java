@@ -21,6 +21,7 @@ package de.markusbordihn.modsoptimizer.utils;
 
 import de.markusbordihn.modsoptimizer.Constants;
 import de.markusbordihn.modsoptimizer.data.ModFileData;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,8 +44,9 @@ public class DuplicatedModsUtils {
         if (latestModFile == null || modFile.version().greaterThan(latestModFile.version())) {
           latestModFile = modFile;
         } else if (modFile.version().equals(latestModFile.version())) {
-          String modFileName = modFile.path().getFileName().toString().toLowerCase();
-          String latestModFileName = latestModFile.path().getFileName().toString().toLowerCase();
+          String modFileName = modFile.path().getFileName().toString().toLowerCase(Locale.ROOT);
+          String latestModFileName =
+              latestModFile.path().getFileName().toString().toLowerCase(Locale.ROOT);
           // Favor mod files without copy / kopie in the file name and shorter file names.
           if ((latestModFileName.contains("copy") && !modFileName.contains("copy"))
               || (latestModFileName.contains("kopie") && !modFileName.contains("kopie"))

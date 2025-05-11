@@ -28,7 +28,7 @@ import de.markusbordihn.modsoptimizer.data.ModFileData.ModType;
 import java.io.File;
 import org.junit.jupiter.api.Test;
 
-class ModDataTests {
+class ModDatabaseTests {
 
   private final File testModFiles = new File("src/test/resources/testfile/mods");
   private final File testModBothSampleFiles =
@@ -53,57 +53,56 @@ class ModDataTests {
   }
 
   @Test
-  void testReadRawModInfo_NeoForge() {
-    ModFileData neoModFileData01 = ModData.readRawModInfo(testModFiles, "neoforge_test_mod_01.jar");
+  void testReadModInfo_NeoForge() {
+    ModFileData neoModFileData01 = ModData.readModInfo(testModFiles, "neoforge_test_mod_01.jar");
     assertEquals(ModType.NEOFORGE, neoModFileData01.modType());
     assertEquals(ModEnvironment.BOTH, neoModFileData01.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, neoModFileData01.id());
   }
 
   @Test
-  void testReadRawModInfo_Forge() {
-    ModFileData modFileData01 = ModData.readRawModInfo(testModFiles, "forge_test_mod_01.jar");
+  void testReadModInfo_Forge() {
+    ModFileData modFileData01 = ModData.readModInfo(testModFiles, "forge_test_mod_01.jar");
     assertEquals(ModType.FORGE, modFileData01.modType());
     assertEquals(ModEnvironment.BOTH, modFileData01.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, modFileData01.id());
 
-    ModFileData modFileData02 = ModData.readRawModInfo(testModFiles, "forge_test_mod_02.jar");
+    ModFileData modFileData02 = ModData.readModInfo(testModFiles, "forge_test_mod_02.jar");
     assertEquals(ModType.FORGE, modFileData02.modType());
     assertEquals(ModEnvironment.BOTH, modFileData02.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, modFileData02.id());
 
-    ModFileData modFileData03 = ModData.readRawModInfo(testModFiles, "forge_test_mod_03.jar");
+    ModFileData modFileData03 = ModData.readModInfo(testModFiles, "forge_test_mod_03.jar");
     assertEquals(ModType.FORGE, modFileData03.modType());
     assertEquals(ModEnvironment.BOTH, modFileData03.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, modFileData03.id());
 
-    ModFileData modFileData04 = ModData.readRawModInfo(testModFiles, "forge_test_mod_04.jar");
+    ModFileData modFileData04 = ModData.readModInfo(testModFiles, "forge_test_mod_04.jar");
     assertEquals(ModType.FORGE, modFileData04.modType());
     assertEquals(ModEnvironment.BOTH, modFileData04.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, modFileData04.id());
   }
 
   @Test
-  void testReadRawModInfo_Fabric() {
-    ModFileData fabricModFileData01 =
-        ModData.readRawModInfo(testModFiles, "fabric_test_mod_01.jar");
+  void testReadModInfo_Fabric() {
+    ModFileData fabricModFileData01 = ModData.readModInfo(testModFiles, "fabric_test_mod_01.jar");
     assertEquals(ModType.FABRIC, fabricModFileData01.modType());
     assertEquals(ModEnvironment.BOTH, fabricModFileData01.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, fabricModFileData01.id());
   }
 
   @Test
-  void testReadRawModInfo_Quilt() {
-    ModFileData quiltModFileData01 = ModData.readRawModInfo(testModFiles, "quilt_test_mod_01.jar");
+  void testReadModInfo_Quilt() {
+    ModFileData quiltModFileData01 = ModData.readModInfo(testModFiles, "quilt_test_mod_01.jar");
     assertEquals(ModType.QUILT, quiltModFileData01.modType());
     assertEquals(ModEnvironment.CLIENT, quiltModFileData01.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, quiltModFileData01.id());
   }
 
   @Test
-  void testReadRawModInfo_Broken_Samples() {
+  void testReadModInfo_Broken_Samples() {
     ModFileData sampleModfileData01 =
-        ModData.readRawModInfo(
+        ModData.readModInfo(
             testModBrokenSampleFiles, "HopoBetterRuinedPortals-[1.19-1.19.3]-1.3.3.jar");
     assertEquals(ModType.MIXED, sampleModfileData01.modType());
     assertEquals(ModEnvironment.DATA_PACK, sampleModfileData01.environment());
@@ -113,13 +112,13 @@ class ModDataTests {
   @Test
   void testReadRawModInfo_NeoForge_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModClientSampleFiles, "appleskin-neoforge-mc1.20.2-2.5.1.jar");
+        ModData.readModInfo(testModClientSampleFiles, "appleskin-neoforge-mc1.20.2-2.5.1.jar");
     assertEquals(ModType.NEOFORGE, sampleModFileData01.modType());
-    assertEquals(ModEnvironment.CLIENT, sampleModFileData01.environment());
+    assertEquals(ModEnvironment.BOTH, sampleModFileData01.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData01.id());
 
     ModFileData sampleModFileData02 =
-        ModData.readRawModInfo(
+        ModData.readModInfo(
             testModBothSampleFiles, "JustEnoughProfessions-neoforge-1.21.1-4.0.4.jar");
     assertEquals(ModType.NEOFORGE, sampleModFileData02.modType());
     assertEquals(ModEnvironment.BOTH, sampleModFileData02.environment());
@@ -127,153 +126,151 @@ class ModDataTests {
   }
 
   @Test
-  void testReadRawModInfo_Forge_Default_Samples() {
+  void testReadModInfo_Forge_Default_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModBothSampleFiles, "easy_mob_farm_1.20.1-6.5.0.jar");
+        ModData.readModInfo(testModBothSampleFiles, "easy_mob_farm_1.20.1-6.5.0.jar");
     assertEquals(ModType.FORGE, sampleModFileData01.modType());
     assertEquals(ModEnvironment.BOTH, sampleModFileData01.environment());
     assertEquals("easy_mob_farm", sampleModFileData01.id());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData01.id());
 
     ModFileData sampleModFileData02 =
-        ModData.readRawModInfo(testModBothSampleFiles, "awesomedungeon-2.0.11.jar");
+        ModData.readModInfo(testModBothSampleFiles, "awesomedungeon-2.0.11.jar");
     assertEquals(ModType.FORGE, sampleModFileData02.modType());
     assertEquals(ModEnvironment.BOTH, sampleModFileData02.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData02.id());
 
     ModFileData sampleModFileData03 =
-        ModData.readRawModInfo(testModBothSampleFiles, "AttributeFix-Forge-1.18.2-14.0.2.jar");
+        ModData.readModInfo(testModBothSampleFiles, "AttributeFix-Forge-1.18.2-14.0.2.jar");
     assertEquals(ModType.FORGE, sampleModFileData03.modType());
-    assertEquals(ModEnvironment.UNKNOWN, sampleModFileData03.environment());
+    assertEquals(ModEnvironment.BOTH, sampleModFileData03.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData03.id());
 
     ModFileData sampleModFileData04 =
-        ModData.readRawModInfo(testModBothSampleFiles, "JustEnoughProfessions-1.18.2-1.3.0.jar");
+        ModData.readModInfo(testModBothSampleFiles, "JustEnoughProfessions-1.18.2-1.3.0.jar");
     assertEquals(ModType.FORGE, sampleModFileData04.modType());
     assertEquals(ModEnvironment.BOTH, sampleModFileData04.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData04.id());
   }
 
   @Test
-  void testReadRawModInfo_Forge_Unknown_Samples() {
+  void testReadModInfo_Forge_Unknown_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModBothSampleFiles, "Botania-1.18.2-435.jar");
+        ModData.readModInfo(testModBothSampleFiles, "Botania-1.18.2-435.jar");
     assertEquals(ModType.FORGE, sampleModFileData01.modType());
     assertEquals(ModEnvironment.UNKNOWN, sampleModFileData01.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData01.id());
 
     ModFileData sampleModFileData02 =
-        ModData.readRawModInfo(testModBothSampleFiles, "SoL-Carrot-1.18.1-1.12.0.jar");
+        ModData.readModInfo(testModBothSampleFiles, "SoL-Carrot-1.18.1-1.12.0.jar");
     assertEquals(ModType.FORGE, sampleModFileData02.modType());
     assertEquals(ModEnvironment.BOTH, sampleModFileData02.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData02.id());
   }
 
   @Test
-  void testReadRawModInfo_Forge_Server_Samples() {
+  void testReadModInfo_Forge_Server_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModServerSampleFiles, "letmedespawn-1.1.1.jar");
+        ModData.readModInfo(testModServerSampleFiles, "letmedespawn-1.1.1.jar");
     assertEquals(ModType.FORGE, sampleModFileData01.modType());
     assertEquals(ModEnvironment.SERVER, sampleModFileData01.environment());
     assertEquals("letmedespawn", sampleModFileData01.id());
   }
 
   @Test
-  void testReadRawModInfo_Forge_Client_Samples() {
+  void testReadModInfo_Forge_Client_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModClientSampleFiles, "ImmediatelyFast-Forge-1.2.8+1.20.4.jar");
+        ModData.readModInfo(testModClientSampleFiles, "ImmediatelyFast-Forge-1.2.8+1.20.4.jar");
     assertEquals(ModType.FORGE, sampleModFileData01.modType());
     assertEquals(ModEnvironment.CLIENT, sampleModFileData01.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData01.id());
 
-    // Includes wrongly side="both" in mods.toml
     ModFileData sampleModFileData02 =
-        ModData.readRawModInfo(testModClientSampleFiles, "physics-mod-3.0.11-mc-1.20.4-forge.jar");
+        ModData.readModInfo(testModClientSampleFiles, "physics-mod-3.0.11-mc-1.20.4-forge.jar");
     assertEquals(ModType.FORGE, sampleModFileData02.modType());
-    assertEquals(ModEnvironment.BOTH, sampleModFileData02.environment());
+    assertEquals(ModEnvironment.CLIENT, sampleModFileData02.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData02.id());
 
     ModFileData sampleModFileData03 =
-        ModData.readRawModInfo(testModClientSampleFiles, "3dskinlayers-forge-1.5.3-mc1.19.3.jar");
+        ModData.readModInfo(testModClientSampleFiles, "3dskinlayers-forge-1.5.3-mc1.19.3.jar");
     assertEquals(ModType.FORGE, sampleModFileData03.modType());
     assertEquals(ModEnvironment.CLIENT, sampleModFileData03.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData03.id());
 
     ModFileData sampleModFileData04 =
-        ModData.readRawModInfo(testModClientSampleFiles, "BetterAdvancements-1.18.2-0.2.0.146.jar");
+        ModData.readModInfo(testModClientSampleFiles, "BetterAdvancements-1.18.2-0.2.0.146.jar");
     assertEquals(ModType.FORGE, sampleModFileData04.modType());
     assertEquals(ModEnvironment.CLIENT, sampleModFileData04.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData04.id());
 
     ModFileData sampleModFileData05 =
-        ModData.readRawModInfo(testModClientSampleFiles, "rubidium-0.6.4.jar");
+        ModData.readModInfo(testModClientSampleFiles, "rubidium-0.6.4.jar");
     assertEquals(ModType.FORGE, sampleModFileData05.modType());
-    assertEquals(ModEnvironment.UNKNOWN, sampleModFileData05.environment());
+    assertEquals(ModEnvironment.CLIENT, sampleModFileData05.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData05.id());
   }
 
   @Test
-  void testReadRawModInfo_Quilt_Client_Samples() {
+  void testReadModInfo_Quilt_Client_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModClientSampleFiles, "effective-2.1.1+1.19.2.jar");
+        ModData.readModInfo(testModClientSampleFiles, "effective-2.1.1+1.19.2.jar");
     assertEquals(ModType.QUILT, sampleModFileData01.modType());
     assertEquals(ModEnvironment.CLIENT, sampleModFileData01.environment());
     assertEquals("effective", sampleModFileData01.id());
   }
 
   @Test
-  void testReadRawModInfo_Forge_Language_Provider_Samples() {
+  void testReadModInfo_Forge_Language_Provider_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModLibrarySampleFiles, "gml-4.0.9-all.jar");
+        ModData.readModInfo(testModLibrarySampleFiles, "gml-4.0.9-all.jar");
     assertEquals(ModType.FORGE, sampleModFileData01.modType());
     assertEquals(ModEnvironment.LANGUAGE_PROVIDER, sampleModFileData01.environment());
     assertEquals("org.groovymc.gml", sampleModFileData01.id());
   }
 
   @Test
-  void testReadRawModInfo_Forge_Library_Samples() {
+  void testReadModInfo_Forge_Library_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModLibrarySampleFiles, "kotlinforforge-4.9.0-all.jar");
+        ModData.readModInfo(testModLibrarySampleFiles, "kotlinforforge-4.9.0-all.jar");
     assertEquals(ModType.FORGE, sampleModFileData01.modType());
     assertEquals(ModEnvironment.LIBRARY, sampleModFileData01.environment());
     assertEquals("thedarkcolour.kotlinforforge", sampleModFileData01.id());
   }
 
   @Test
-  void testReadRawModInfo_Mixed_Service_Samples() {
+  void testReadModInfo_Mixed_Service_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModServiceSampleFiles, "Connector-1.0.0-beta.36+1.20.1.jar");
+        ModData.readModInfo(testModServiceSampleFiles, "Connector-1.0.0-beta.36+1.20.1.jar");
     assertEquals(ModType.MIXED, sampleModFileData01.modType());
     assertEquals(ModEnvironment.SERVICE, sampleModFileData01.environment());
     assertEquals("dev.su5ed.sinytra.connector", sampleModFileData01.id());
   }
 
   @Test
-  void testReadRawModInfo_Fabric_Samples() {
-    // Includes wrongly side="both" in mods.toml
+  void testReadModInfo_Fabric_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModClientSampleFiles, "physics-mod-3.0.11-mc-1.20.4-fabric.jar");
+        ModData.readModInfo(testModClientSampleFiles, "physics-mod-3.0.11-mc-1.20.4-fabric.jar");
     assertEquals(ModType.FABRIC, sampleModFileData01.modType());
-    assertEquals(ModEnvironment.BOTH, sampleModFileData01.environment());
+    assertEquals(ModEnvironment.CLIENT, sampleModFileData01.environment());
     assertEquals("physicsmod", sampleModFileData01.id());
 
     ModFileData sampleModFileData02 =
-        ModData.readRawModInfo(testModClientSampleFiles, "3dskinlayers-fabric-1.5.6-mc1.20.2.jar");
+        ModData.readModInfo(testModClientSampleFiles, "3dskinlayers-fabric-1.5.6-mc1.20.2.jar");
     assertEquals(ModType.FABRIC, sampleModFileData02.modType());
     assertEquals(ModEnvironment.CLIENT, sampleModFileData02.environment());
     assertEquals("skinlayers", sampleModFileData02.id());
   }
 
   @Test
-  void testReadRawModInfo_Datapack_Samples() {
+  void testReadModInfo_Datapack_Samples() {
     ModFileData sampleModFileData01 =
-        ModData.readRawModInfo(testModDatapackSampleFiles, "explorify-v1.3.0-mc1.20.jar");
+        ModData.readModInfo(testModDatapackSampleFiles, "explorify-v1.3.0-mc1.20.jar");
     assertEquals(ModType.MIXED, sampleModFileData01.modType());
     assertEquals(ModEnvironment.DATA_PACK, sampleModFileData01.environment());
     assertEquals("explorify", sampleModFileData01.id());
 
     ModFileData sampleModFileData02 =
-        ModData.readRawModInfo(testModDatapackSampleFiles, "SmidgeonOBliss-1.19.2-1.3.2.jar");
+        ModData.readModInfo(testModDatapackSampleFiles, "SmidgeonOBliss-1.19.2-1.3.2.jar");
     assertEquals(ModType.FORGE, sampleModFileData02.modType());
     assertEquals(ModEnvironment.DATA_PACK, sampleModFileData02.environment());
     assertEquals("sob", sampleModFileData02.id());

@@ -20,6 +20,7 @@ package de.markusbordihn.modsoptimizer.utils;
 
 import com.github.zafarkhaja.semver.Version;
 import de.markusbordihn.modsoptimizer.Constants;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class SemanticVersionUtils {
@@ -99,7 +100,7 @@ public class SemanticVersionUtils {
       return "";
     }
     // Make sure that version is lower case.
-    version = version.toLowerCase();
+    version = version.toLowerCase(Locale.ROOT);
 
     // Clean up version string.
     version = removeUnnecessaryVersionParts(version);

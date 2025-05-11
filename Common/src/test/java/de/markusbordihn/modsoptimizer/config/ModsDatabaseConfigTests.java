@@ -54,6 +54,6 @@ class ModsDatabaseConfigTests {
     assertEquals(ModEnvironment.SERVER, ModsDatabaseConfig.getModEnvironment("server_side_mod_id"));
     assertEquals(ModEnvironment.CLIENT, ModsDatabaseConfig.getModEnvironment("client_side_mod_id"));
     assertEquals(
-        ModEnvironment.DEFAULT, ModsDatabaseConfig.getModEnvironment("default_side_mod_id"));
+        ModEnvironment.BOTH, ModsDatabaseConfig.getModEnvironment("default_side_mod_id"));
   }
 }
