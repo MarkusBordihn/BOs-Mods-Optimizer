@@ -17,43 +17,50 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package de.markusbordihn.modsoptimizer.config;
+package de.markusbordihn.modsoptimizer.data;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import de.markusbordihn.modsoptimizer.data.ModFileData.ModEnvironment;
-import java.io.File;
-import java.util.Map;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
-class ModsDatabaseConfigTests {
+class ModFileParserTests {
 
   @Test
-  void testGetConfigFile() {
-    File modsDatabaseConfigFile = ModsDatabaseConfig.getConfigFile();
-    assertTrue(modsDatabaseConfigFile.exists());
-  }
-
-  @Test
-  void testGetConfig() {
-    Map<String, String> modsDatabaseConfig = ModsDatabaseConfig.getConfig();
-    assertFalse(modsDatabaseConfig.isEmpty());
-  }
-
-  @Test
-  void testContainsMod() {
-    assertTrue(ModsDatabaseConfig.containsMod("server_side_mod_id"));
-    assertTrue(ModsDatabaseConfig.containsMod("client_side_mod_id"));
-    assertTrue(ModsDatabaseConfig.containsMod("default_side_mod_id"));
-  }
-
-  @Test
-  void testGetModEnvironment() {
-    assertEquals(ModEnvironment.SERVER, ModsDatabaseConfig.getModEnvironment("server_side_mod_id"));
-    assertEquals(ModEnvironment.CLIENT, ModsDatabaseConfig.getModEnvironment("client_side_mod_id"));
+  void testStandardTimestamp() {
     assertEquals(
-        ModEnvironment.BOTH, ModsDatabaseConfig.getModEnvironment("default_side_mod_id"));
+        LocalDateTime.of(2024, 12, 8, 3, 10, 9),
+        ModFileParser.parseTimestamp("2024-12-08T03:10:09+0000"));
+  }
+
+  @Test
+  void testNoneStandardTimestamp() {
+    assertEquals(
+        LocalDateTime.of(2024, 12, 8, 0, 19, 01),
+        ModFileParser.parseTimestamp("2024-12-08-00:19:01"));
+  }
+
+  @Test
+  void testNanoTimestamp() {
+    LocalDateTime result = ModFileParser.parseTimestamp("2024-12-08T03:10:09.753051715");
+    assertEquals(2024, result.getYear());
+    assertEquals(753051715, result.getNano());
+  }
+
+  @Test
+  void testNanoZonedTimestamp() {
+    assertEquals(
+        LocalDateTime.of(2024, 12, 8, 3, 10, 9, 753051715),
+        ModFileParser.parseTimestamp("2024-12-08T03:10:09.753051715Z"));
+  }
+
+  @Test
+  void testInvalidTimestamp() {
+    assertEquals(ModFileData.EMPTY_TIMESTAMP, ModFileParser.parseTimestamp("invalid"));
+  }
+
+  @Test
+  void testNullTimestamp() {
+    assertEquals(ModFileData.EMPTY_TIMESTAMP, ModFileParser.parseTimestamp(null));
   }
 }
