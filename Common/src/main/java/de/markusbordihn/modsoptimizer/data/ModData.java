@@ -174,6 +174,10 @@ public class ModData {
     Constants.LOG.info(OVERVIEW_SEPARATOR);
   }
 
+  public static ModFileData readRawModInfo(File parent, String modFile) {
+    return readModInfo(new File(parent, modFile).toPath(), false);
+  }
+
   public static ModFileData readModInfo(File parent, String modFile) {
     return readModInfo(new File(parent, modFile));
   }
@@ -199,6 +203,10 @@ public class ModData {
   }
 
   public static ModFileData readModInfo(Path modFile) {
+    return readModInfo(modFile, true);
+  }
+
+  public static ModFileData readModInfo(Path modFile, boolean useModsDatabaseConfig) {
     try (JarFile jarFile = new JarFile(modFile.toFile())) {
       // Read manifest
       Manifest manifest = jarFile.getManifest();
@@ -213,7 +221,7 @@ public class ModData {
       ModFileData modFileData = ModFileParser.parseModFile(manifest, modFile, jarFile);
 
       // Check local mods database and update mod environment, if needed.
-      if (ModsDatabaseConfig.containsMod(modFileData.id())) {
+      if (useModsDatabaseConfig && ModsDatabaseConfig.containsMod(modFileData.id())) {
         ModEnvironment modEnvironment = ModsDatabaseConfig.getModEnvironment(modFileData.id());
         if (modEnvironment != modFileData.environment()) {
           Constants.LOG.info(
