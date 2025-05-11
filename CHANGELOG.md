@@ -5,6 +5,14 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v4.1.0
+
+- Fixed #41 by adding support for "alternative" mods.toml entries.
+- Fixed #40 by adding `Smithing Template Viewer` to the client side mod list.
+- Added mod file parsing support for several "alternative" mods.toml entries.
+- Added support for `neoforge.mods.toml` files and better global language support.
+- Added additional test files and seperated test for ModData(raw) and ModsDatabase Tests.
+
 ### v4.0.0
 
 - Fixed #37 by adding `AttributeFix`, `Emojiful` and `BetterBurning` to the both mod lists.
@@ -93,6 +101,6 @@ For the full changelog, please go to the [GitHub History][history] instead.
 
 - Initial release of Mods Optimizer (will replace Adaptive Performance Tweaks Mod Module).
 
-[history]: https://github.com/MarkusBordihn/BOs-Mods-Optimizer/commits/main
+[history]: https://github.com/MarkusBordihn/BOs-Mods-Optimizer/commits/1.21.3
 
 [things_pack]: https://www.curseforge.com/minecraft/modpacks/things-pack
