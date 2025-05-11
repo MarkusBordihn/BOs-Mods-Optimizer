@@ -105,7 +105,7 @@ public class ModsDatabaseConfig {
     } else if ("server".equals(modType)) {
       return ModEnvironment.SERVER;
     }
-    return ModEnvironment.DEFAULT;
+    return ModEnvironment.BOTH;
   }
 
   public static String cleanTomlFileWithWarnings(File file) throws IOException {

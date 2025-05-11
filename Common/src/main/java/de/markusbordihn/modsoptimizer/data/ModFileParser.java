@@ -34,6 +34,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -56,7 +57,7 @@ public class ModFileParser {
   private static ModType getModTypeByFile(Manifest manifest, JarFile jarFile) {
 
     // File name based check.
-    String fileName = jarFile.getName().toLowerCase();
+    String fileName = jarFile.getName().toLowerCase(Locale.ROOT);
     if (fileName.endsWith(".jar")) {
       if (fileName.contains("-neoforge-") || fileName.endsWith("-neoforge.jar")) {
         return ModType.NEOFORGE;
@@ -139,7 +140,7 @@ public class ModFileParser {
             modType,
             ModFileData.EMPTY_MOD_NAME,
             ModFileData.EMPTY_VERSION,
-            ModEnvironment.DEFAULT,
+            ModEnvironment.BOTH,
             ModFileData.EMPTY_TIMESTAMP);
       }
     };
@@ -222,11 +223,18 @@ public class ModFileParser {
     String modId = ModFileData.EMPTY_MOD_ID;
     String name = ModFileData.EMPTY_MOD_NAME;
     Version version = ModFileData.EMPTY_VERSION;
+    ModType modType = ModType.FORGE;
     ModEnvironment environment = ModEnvironment.UNKNOWN;
     LocalDateTime timestamp = ModFileData.EMPTY_TIMESTAMP;
 
-    // Parse mods.toml file
-    Toml modsToml = TomlFileParser.readTomlFile(jarFile, Path.of("META-INF/mods.toml"));
+    // Parse mods.toml file or alternative neoforge.mods.toml file
+    Toml modsToml = TomlFileParser.tryReadTomlFile(jarFile, Path.of("META-INF/mods.toml"));
+    if (modsToml == null || modsToml.isEmpty()) {
+      modsToml = TomlFileParser.tryReadTomlFile(jarFile, Path.of("META-INF/neoforge.mods.toml"));
+      if (modsToml != null && !modsToml.isEmpty()) {
+        modType = ModType.NEOFORGE;
+      }
+    }
     if (modsToml != null && !modsToml.isEmpty()) {
       String modsPrefix = "mods[0].";
       String modsVersionId = modsPrefix + "version";
@@ -263,27 +271,36 @@ public class ModFileParser {
         version = SemanticVersionUtils.parseVersion(modsToml.getString("version"));
       }
 
-      // Iterate over all dependencies (max. 10) and check the required side for "forge" or
-      // "neoforge", we don't care about other dependencies yet.
+      // Iterate over all dependencies (max. 10) and check the required sides for "forge",
+      // "neoforge", "minecraft" we don't care about other dependencies yet.
       if (environment == ModEnvironment.UNKNOWN) {
-        for (int i = 0; i < 10; i++) {
-          String dependencyId = "dependencies." + modId + "[" + i + "]";
+        for (int i = -1; i < 10; i++) {
+          String modIdValue;
+          String dependencyId =
+              i == -1 ? "dependencies[0]" : "dependencies." + modId + "[" + i + "]";
           try {
             if (!modsToml.contains(dependencyId)) {
               break;
             }
-          } catch (Exception e) {
-            break;
+            modIdValue = modsToml.getString(dependencyId + ".modId");
+          } catch (Exception exception) {
+            if (i == -1) {
+              continue;
+            } else {
+              break;
+            }
           }
-          if (modsToml.getString(dependencyId + ".modId").equals("forge")
-              || modsToml.getString(dependencyId + ".modId").equals("neoforge")) {
-            if (modsToml.getString(dependencyId + ".side") != null) {
-              String requiredSide = modsToml.getString(dependencyId + ".side").toLowerCase();
+          if ("forge".equals(modIdValue)
+              || "neoforge".equals(modIdValue)
+              || "minecraft".equals(modIdValue)) {
+            String sideValue = modsToml.getString(dependencyId + ".side");
+            if (sideValue != null) {
+              String requiredSide = sideValue.toLowerCase(Locale.ROOT);
               environment =
                   switch (requiredSide) {
                     case "client" -> ModEnvironment.CLIENT;
                     case "server" -> ModEnvironment.SERVER;
-                    case "both" -> ModEnvironment.DEFAULT;
+                    case "both" -> ModEnvironment.BOTH;
                     default -> environment;
                   };
             } else {
@@ -305,13 +322,14 @@ public class ModFileParser {
               switch (displayTest) {
                 case "IGNORE_SERVER_VERSION" -> ModEnvironment.SERVER;
                 case "IGNORE_ALL_VERSION" -> ModEnvironment.CLIENT;
-                case "MATCH_VERSION" -> ModEnvironment.DEFAULT;
+                case "MATCH_VERSION" -> ModEnvironment.BOTH;
                 default -> environment;
               };
         }
       }
     } else {
-      Constants.LOG.warn("⚠ Found no META-INF/mods.toml file for {}!", path);
+      Constants.LOG.warn(
+          "⚠ Found no META-INF/mods.toml or META-INF/neoforge.mods.toml file for {}!", path);
     }
 
     // Add manifest information, if available.
@@ -337,10 +355,16 @@ public class ModFileParser {
       if (modId == null || modId.isEmpty() || modId.equals(ModFileData.EMPTY_MOD_ID)) {
         if (hasAttributeValue(MANIFEST_AUTOMATIC_MODULE_NAME, attributes)) {
           modId =
-              attributes.getValue(MANIFEST_AUTOMATIC_MODULE_NAME).replace(" ", "-").toLowerCase();
+              attributes
+                  .getValue(MANIFEST_AUTOMATIC_MODULE_NAME)
+                  .replace(" ", "-")
+                  .toLowerCase(Locale.ROOT);
         } else if (hasAttributeValue(MANIFEST_IMPLEMENTATION_TITLE, attributes)) {
           modId =
-              attributes.getValue(MANIFEST_IMPLEMENTATION_TITLE).replace(" ", "-").toLowerCase();
+              attributes
+                  .getValue(MANIFEST_IMPLEMENTATION_TITLE)
+                  .replace(" ", "-")
+                  .toLowerCase(Locale.ROOT);
         }
       }
 
@@ -380,7 +404,7 @@ public class ModFileParser {
       }
     }
 
-    return new ModFileData(path, modId, ModType.FORGE, name, version, environment, timestamp);
+    return new ModFileData(path, modId, modType, name, version, environment, timestamp);
   }
 
   public static ModFileData parseQuiltModFile(Manifest manifest, Path path, JarFile jarFile) {
@@ -429,7 +453,7 @@ public class ModFileParser {
               switch (environmentString) {
                 case "client" -> ModEnvironment.CLIENT;
                 case "dedicated_server" -> ModEnvironment.SERVER;
-                case "*" -> ModEnvironment.DEFAULT;
+                case "*" -> ModEnvironment.BOTH;
                 default -> environment;
               };
         }
@@ -502,7 +526,7 @@ public class ModFileParser {
             switch (environmentString) {
               case "client" -> ModEnvironment.CLIENT;
               case "server" -> ModEnvironment.SERVER;
-              case "*" -> ModEnvironment.DEFAULT;
+              case "*" -> ModEnvironment.BOTH;
               default -> environment;
             };
       }

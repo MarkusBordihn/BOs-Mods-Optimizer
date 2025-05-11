@@ -31,17 +31,31 @@ public class TomlFileParser {
   private TomlFileParser() {}
 
   public static Toml readTomlFile(JarFile jarFile, Path path) {
-    ZipEntry modsFile = jarFile.getEntry(path.toString().replace("\\", "/"));
+    return readTomlFile(jarFile, path, false);
+  }
+
+  public static Toml tryReadTomlFile(JarFile jarFile, Path path) {
+    return readTomlFile(jarFile, path, true);
+  }
+
+  public static Toml readTomlFile(JarFile jarFile, Path path, boolean ignoreErrors) {
+    String normalizedPath = normalizePath(path);
+    ZipEntry modsFile = jarFile.getEntry(normalizedPath);
     if (modsFile != null && !modsFile.isDirectory()) {
       try (InputStream inputStream = jarFile.getInputStream(modsFile)) {
         return new Toml().read(inputStream);
       } catch (Exception e) {
-        Constants.LOG.error("Error reading TOML file {} from {}: {}", path, jarFile, e);
+        if (!ignoreErrors) {
+          Constants.LOG.error("Error reading TOML file {} from {}: {}", path, jarFile, e);
+        }
       }
-    } else {
-      Constants.LOG.error(
-          "TOML file {} not found in {}", path.toString().replace("\\", "/"), jarFile);
+    } else if (!ignoreErrors) {
+      Constants.LOG.error("TOML file {} not found in {}", normalizedPath, jarFile);
     }
     return new Toml();
+  }
+
+  private static String normalizePath(Path path) {
+    return path.toString().replace("\\", "/");
   }
 }
