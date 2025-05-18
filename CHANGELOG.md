@@ -5,6 +5,16 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v4.2.0
+
+- Fixed #45 by adding `Create Cyber Googles`, `Crearte Schematics` and `JER - Just Enough Resources`
+  to client
+  side mod list.
+- Added unit tests for timestamp parsing functionality.
+- Added preprocessing for TOML files to handle invalid keys and improve logging.
+- Improved support for NeoForge mod type detection.
+- Improved timestamp parsing to support multiple formats and handle invalid timestamps gracefully.
+
 ### v4.1.0
 
 - Fixed #41 by adding support for "alternative" mods.toml entries.

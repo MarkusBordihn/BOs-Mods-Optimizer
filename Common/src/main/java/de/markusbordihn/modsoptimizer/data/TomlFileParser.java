@@ -21,12 +21,17 @@ package de.markusbordihn.modsoptimizer.data;
 
 import com.moandjiezana.toml.Toml;
 import de.markusbordihn.modsoptimizer.Constants;
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 
 public class TomlFileParser {
+
+  private static final String LOG_PREFIX = "[TOMLFileParser]";
 
   private TomlFileParser() {}
 
@@ -43,19 +48,50 @@ public class TomlFileParser {
     ZipEntry modsFile = jarFile.getEntry(normalizedPath);
     if (modsFile != null && !modsFile.isDirectory()) {
       try (InputStream inputStream = jarFile.getInputStream(modsFile)) {
-        return new Toml().read(inputStream);
+        return new Toml().read(preprocessToml(inputStream, jarFile.getName()));
       } catch (Exception e) {
         if (!ignoreErrors) {
-          Constants.LOG.error("Error reading TOML file {} from {}: {}", path, jarFile, e);
+          Constants.LOG.error(
+              "{} ⚠️ Error reading TOML file {} from {}: {}", LOG_PREFIX, path, jarFile, e);
         }
       }
     } else if (!ignoreErrors) {
-      Constants.LOG.error("TOML file {} not found in {}", normalizedPath, jarFile);
+      Constants.LOG.error(
+          "{} ⚠️ TOML file {} not found in {}", LOG_PREFIX, normalizedPath, jarFile);
     }
     return new Toml();
   }
 
   private static String normalizePath(Path path) {
     return path.toString().replace("\\", "/");
+  }
+
+  public static String preprocessToml(InputStream inputStream, String jarFileName) {
+    return new BufferedReader(new InputStreamReader(inputStream))
+        .lines()
+        .map(
+            line -> {
+              String trimmed = line.trim();
+
+              // Skip section headers, comments, and empty lines
+              if (trimmed.startsWith("[") || trimmed.startsWith("#") || trimmed.isEmpty()) {
+                return line;
+              }
+
+              // Replace invalid keys with underscores
+              int equalsIndex = trimmed.indexOf('=');
+              if (equalsIndex > 0) {
+                String key = trimmed.substring(0, equalsIndex).trim();
+                if (key.contains(".") && !(key.startsWith("\"") && key.endsWith("\""))) {
+                  String newKey = key.replace(".", "_");
+                  Constants.LOG.warn(
+                      "{} ⚠️ Found invalid key '{}' in {}", LOG_PREFIX, key, jarFileName);
+                  return line.replaceFirst(key, newKey);
+                }
+              }
+
+              return line;
+            })
+        .collect(Collectors.joining("\n"));
   }
 }

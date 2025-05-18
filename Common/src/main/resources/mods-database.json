@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-05-11T19:00:00Z",
+  "lastUpdated": "2025-05-18T19:00:00Z",
   "server": [
     "adaptive_performance_tweaks_core",
     "adaptive_performance_tweaks_gamerules",
@@ -96,6 +96,7 @@
     "cosmetica",
     "craftify",
     "craftpresence",
+    "create_cyber_goggles",
     "ctrl-q",
     "cull-leaves",
     "cull-less-leaves",
@@ -124,6 +125,7 @@
     "effective",
     "elytra-flight-hud",
     "elytrautilities",
+    "emi_create_schematics",
     "emiffect",
     "emitrades",
     "emoji-type",
@@ -193,6 +195,7 @@
     "itemphysiclite",
     "itemsdontbreak",
     "itemzoom",
+    "jeresources",
     "justzoom",
     "lambdabettergrass",
     "lambdynamiclights",

@@ -124,6 +124,13 @@ class ModDataTests {
     assertEquals(ModType.NEOFORGE, sampleModFileData02.modType());
     assertEquals(ModEnvironment.BOTH, sampleModFileData02.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData02.id());
+
+    ModFileData sampleModFileData03 =
+        ModData.readRawModInfo(
+            testModBothSampleFiles, "supplementaries-1.21-3.0.30-beta-neoforge.jar");
+    assertEquals(ModType.NEOFORGE, sampleModFileData03.modType());
+    assertEquals(ModEnvironment.BOTH, sampleModFileData03.environment());
+    assertNotEquals(ModFileData.EMPTY_MOD_ID, sampleModFileData03.id());
   }
 
   @Test
@@ -277,5 +284,11 @@ class ModDataTests {
     assertEquals(ModType.FORGE, sampleModFileData02.modType());
     assertEquals(ModEnvironment.DATA_PACK, sampleModFileData02.environment());
     assertEquals("sob", sampleModFileData02.id());
+
+    ModFileData sampleModFileData03 =
+        ModData.readRawModInfo(testModDatapackSampleFiles, "Explorify v1.6.2 f10-48.jar");
+    assertEquals(ModType.MIXED, sampleModFileData03.modType());
+    assertEquals(ModEnvironment.DATA_PACK, sampleModFileData03.environment());
+    assertEquals("explorify", sampleModFileData03.id());
   }
 }
