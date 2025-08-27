@@ -12,6 +12,7 @@ logoFile = "logo.png"
 credits = ""
 authors = "Markus Bordihn"
 description = '''Automatic and realtime server bundling (one mod pack for client/server) and mod clean up for better performance and less crashes.'''
+displayTest = "IGNORE_ALL_VERSION"
 
 [[dependencies.mods_optimizer]]
 modId = "forge"
@@ -23,6 +24,6 @@ side = "BOTH"
 [[dependencies.mods_optimizer]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.21.5,1.22)"
+versionRange = "[1.21.6,1.22)"
 ordering = "NONE"
 side = "BOTH"

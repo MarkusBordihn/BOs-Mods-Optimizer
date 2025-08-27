@@ -70,6 +70,11 @@ public class ModLocatorService implements IDependencyLocator {
   }
 
   @Override
+  public int getPriority() {
+    return HIGHEST_SYSTEM_PRIORITY;
+  }
+
+  @Override
   public void scanMods(List<IModFile> list, IDiscoveryPipeline iDiscoveryPipeline) {
     Constants.LOG.debug("scanMods");
   }

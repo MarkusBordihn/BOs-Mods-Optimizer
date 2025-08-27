@@ -52,12 +52,12 @@ public class TomlFileParser {
       } catch (Exception e) {
         if (!ignoreErrors) {
           Constants.LOG.error(
-            "{} ⚠️ Error reading TOML file {} from {}: {}", LOG_PREFIX, path, jarFile, e);
+              "{} ⚠️ Error reading TOML file {} from {}: {}", LOG_PREFIX, path, jarFile, e);
         }
       }
     } else if (!ignoreErrors) {
       Constants.LOG.error(
-        "{} ⚠️ TOML file {} not found in {}", LOG_PREFIX, normalizedPath, jarFile);
+          "{} ⚠️ TOML file {} not found in {}", LOG_PREFIX, normalizedPath, jarFile);
     }
     return new Toml();
   }
@@ -68,30 +68,30 @@ public class TomlFileParser {
 
   public static String preprocessToml(InputStream inputStream, String jarFileName) {
     return new BufferedReader(new InputStreamReader(inputStream))
-      .lines()
-      .map(
-        line -> {
-          String trimmed = line.trim();
+        .lines()
+        .map(
+            line -> {
+              String trimmed = line.trim();
 
-          // Skip section headers, comments, and empty lines
-          if (trimmed.startsWith("[") || trimmed.startsWith("#") || trimmed.isEmpty()) {
-            return line;
-          }
+              // Skip section headers, comments, and empty lines
+              if (trimmed.startsWith("[") || trimmed.startsWith("#") || trimmed.isEmpty()) {
+                return line;
+              }
 
-          // Replace invalid keys with underscores
-          int equalsIndex = trimmed.indexOf('=');
-          if (equalsIndex > 0) {
-            String key = trimmed.substring(0, equalsIndex).trim();
-            if (key.contains(".") && !(key.startsWith("\"") && key.endsWith("\""))) {
-              String newKey = key.replace(".", "_");
-              Constants.LOG.warn(
-                "{} ⚠️ Found invalid key '{}' in {}", LOG_PREFIX, key, jarFileName);
-              return line.replaceFirst(key, newKey);
-            }
-          }
+              // Replace invalid keys with underscores
+              int equalsIndex = trimmed.indexOf('=');
+              if (equalsIndex > 0) {
+                String key = trimmed.substring(0, equalsIndex).trim();
+                if (key.contains(".") && !(key.startsWith("\"") && key.endsWith("\""))) {
+                  String newKey = key.replace(".", "_");
+                  Constants.LOG.warn(
+                      "{} ⚠️ Found invalid key '{}' in {}", LOG_PREFIX, key, jarFileName);
+                  return line.replaceFirst(key, newKey);
+                }
+              }
 
-          return line;
-        })
-      .collect(Collectors.joining("\n"));
+              return line;
+            })
+        .collect(Collectors.joining("\n"));
   }
 }
