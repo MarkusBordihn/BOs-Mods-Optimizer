@@ -20,5 +20,5 @@ pluginManagement {
   }
 }
 
-rootProject.name = 'Mods Optimizer 1.21.8'
+rootProject.name = 'Mods Optimizer 1.21.9'
 include("Common", "Forge", "NeoForge")

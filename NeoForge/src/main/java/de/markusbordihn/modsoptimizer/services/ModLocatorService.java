@@ -19,15 +19,13 @@
 
 package de.markusbordihn.modsoptimizer.services;
 
-import cpw.mods.modlauncher.Environment;
-import cpw.mods.modlauncher.Launcher;
-import cpw.mods.modlauncher.api.IEnvironment;
 import de.markusbordihn.modsoptimizer.Constants;
 import de.markusbordihn.modsoptimizer.data.GameEnvironment;
 import de.markusbordihn.modsoptimizer.service.ModsOptimizerService;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforgespi.locating.IDependencyLocator;
 import net.neoforged.neoforgespi.locating.IDiscoveryPipeline;
@@ -37,16 +35,12 @@ public class ModLocatorService implements IDependencyLocator {
 
   public ModLocatorService() {
 
-    // Detect game environment.
-    Environment environment = Launcher.INSTANCE.environment();
-    Optional<String> launchTarget = environment.getProperty(IEnvironment.Keys.LAUNCHTARGET.get());
-
     // Setup and initialized Mods Optimizer Service.
     ModsOptimizerService modsOptimizer =
         new ModsOptimizerService(
                 FMLPaths.GAMEDIR.get().toFile(),
                 FMLPaths.MODSDIR.get().toFile(),
-                launchTarget.isPresent() && launchTarget.get().contains("server")
+                FMLEnvironment.getDist() == Dist.DEDICATED_SERVER
                     ? GameEnvironment.SERVER
                     : GameEnvironment.CLIENT)
             .init();
