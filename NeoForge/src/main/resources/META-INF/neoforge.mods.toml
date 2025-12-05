@@ -15,13 +15,13 @@ displayTest = "IGNORE_ALL_VERSION"
 [[dependencies.mods_optimizer]]
 modId = "neoforge"
 mandatory = true
-versionRange = "[21.9.0,)"
+versionRange = "[21.10.0,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.mods_optimizer]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.21.9,1.22)"
+versionRange = "[1.21.10,1.22)"
 ordering = "NONE"
 side = "BOTH"
