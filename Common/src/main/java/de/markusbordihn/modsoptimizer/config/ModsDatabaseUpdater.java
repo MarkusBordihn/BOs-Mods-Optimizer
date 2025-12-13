@@ -43,25 +43,54 @@ public class ModsDatabaseUpdater {
 
   private static final String LOG_PREFIX = "[Mods Database Updater]";
 
-  private static final Path CONFIG_DIR =
+  private static final Path DEFAULT_CONFIG_DIR =
       Paths.get("").toAbsolutePath().resolve("config").resolve(Constants.MOD_ID);
-  private static final Path LOCAL_FILE = CONFIG_DIR.resolve("mods-database.json");
   private static final String REMOTE_URL =
       "https://raw.githubusercontent.com/MarkusBordihn/BOs-Mods-Optimizer/1.18.2/Common/src/main/resources/mods-database.json";
-  private static final int CACHE_MAX_AGE_HOURS = 24;
+  private static final int CACHE_MAX_AGE_HOURS = 48;
+  private static final String MODS_DATABASE_FILE = "mods-database.json";
+  private static final String KEY_CLIENT = "client";
+  private static final String KEY_SERVER = "server";
+  private static final String KEY_BOTH = "both";
+  private static final Set<String> VALID_KEYS = Set.of(KEY_CLIENT, KEY_SERVER, KEY_BOTH);
+  private static Path configDir = DEFAULT_CONFIG_DIR;
 
-  private static final Set<String> VALID_KEYS = Set.of("client", "server", "both");
+  public static Path getConfigDir() {
+    return configDir;
+  }
+
+  public static void setConfigDir(Path customConfigDir) {
+    configDir = customConfigDir != null ? customConfigDir : DEFAULT_CONFIG_DIR;
+  }
+
+  public static void resetConfigDir() {
+    configDir = DEFAULT_CONFIG_DIR;
+  }
+
+  private static Path getLocalFile() {
+    return configDir.resolve(MODS_DATABASE_FILE);
+  }
+
+  private static Path getOverrideFile() {
+    return configDir.resolve("mods-database-override.json");
+  }
 
   public static void updateFromRemoteIfNeeded() {
+    Path localFile = getLocalFile();
     try {
-      Files.createDirectories(CONFIG_DIR);
+      Files.createDirectories(configDir);
 
-      if (Files.exists(LOCAL_FILE)) {
-        Instant lastModified = Files.getLastModifiedTime(LOCAL_FILE).toInstant();
-        if (isManuallyModified(LOCAL_FILE)) {
+      if (Files.exists(localFile)) {
+        Instant lastModified = Files.getLastModifiedTime(localFile).toInstant();
+        if (isManuallyModified(localFile)) {
           Constants.LOG.info(
               "{} 🛑 Local mods-database.json was modified by user, skipping remote update.",
               LOG_PREFIX);
+          String currentHash = calculateSha256(localFile);
+          Files.writeString(
+              localFile.resolveSibling("mods-database.json.sha256"),
+              currentHash,
+              StandardCharsets.UTF_8);
           return;
         }
 
@@ -78,12 +107,10 @@ public class ModsDatabaseUpdater {
       }
 
       try (InputStream inputStream = new URL(REMOTE_URL).openStream()) {
-        Files.copy(inputStream, LOCAL_FILE, StandardCopyOption.REPLACE_EXISTING);
-        String newHash = calculateSha256(LOCAL_FILE);
+        Files.copy(inputStream, localFile, StandardCopyOption.REPLACE_EXISTING);
+        String newHash = calculateSha256(localFile);
         Files.writeString(
-            LOCAL_FILE.resolveSibling("mods-database.json.sha256"),
-            newHash,
-            StandardCharsets.UTF_8);
+            localFile.resolveSibling("mods-database.json.sha256"), newHash, StandardCharsets.UTF_8);
         Constants.LOG.info(
             "{} ✅ Fetched remote mods-database.json and saved SHA-256 hash.", LOG_PREFIX);
       }
@@ -95,31 +122,101 @@ public class ModsDatabaseUpdater {
   }
 
   public static JsonObject getModsDatabase() {
-    // Read local mods-database.json
-    if (Files.exists(LOCAL_FILE)) {
-      try (InputStream inputStream = Files.newInputStream(LOCAL_FILE)) {
+    Path localFile = getLocalFile();
+    JsonObject baseDatabase = new JsonObject();
+
+    if (Files.exists(localFile)) {
+      try (InputStream inputStream = Files.newInputStream(localFile)) {
         JsonObject jsonObject = parseAndValidate(inputStream);
-        if (jsonObject != null) return jsonObject;
+        if (jsonObject != null) {
+          baseDatabase = jsonObject;
+        }
       } catch (IOException e) {
         Constants.LOG.warn(
             "{} ⚠ Failed to read local mods-database.json: {}", LOG_PREFIX, e.getMessage());
       }
     }
 
-    // Read fallback mods-database.json
-    try (InputStream inputStream =
-        ModsDatabaseUpdater.class.getClassLoader().getResourceAsStream("mods-database.json")) {
-      if (inputStream != null) {
-        JsonObject jsonObject = parseAndValidate(inputStream);
-        if (jsonObject != null) return jsonObject;
+    if (baseDatabase.size() == 0) {
+      try (InputStream inputStream =
+          ModsDatabaseUpdater.class.getClassLoader().getResourceAsStream("mods-database.json")) {
+        if (inputStream != null) {
+          JsonObject jsonObject = parseAndValidate(inputStream);
+          if (jsonObject != null) {
+            baseDatabase = jsonObject;
+          }
+        }
+      } catch (IOException e) {
+        Constants.LOG.warn(
+            "{} ⚠ Failed to read fallback mods-database.json: {}", LOG_PREFIX, e.getMessage());
+      }
+    }
+
+    if (baseDatabase.size() == 0) {
+      Constants.LOG.error("{} ❌ Could not load any valid mods-database.json!", LOG_PREFIX);
+      return new JsonObject();
+    }
+
+    // Validate base database for duplicates
+    validateDuplicateModIds(baseDatabase, "mods-database.json");
+
+    // Apply overrides
+    JsonObject overrideDatabase = getModsDatabaseOverride();
+    if (overrideDatabase.size() > 0) {
+      validateDuplicateModIds(overrideDatabase, "mods-database-override.json");
+      baseDatabase = applyOverrides(baseDatabase, overrideDatabase);
+    }
+
+    return baseDatabase;
+  }
+
+  public static JsonObject getModsDatabaseOverride() {
+    Path overrideFile = getOverrideFile();
+    if (!Files.exists(overrideFile)) {
+      createOverrideTemplate();
+      return new JsonObject();
+    }
+
+    try (InputStream inputStream = Files.newInputStream(overrideFile)) {
+      JsonObject jsonObject = parseAndValidate(inputStream);
+      if (jsonObject != null) {
+        return jsonObject;
       }
     } catch (IOException e) {
       Constants.LOG.warn(
-          "{} ⚠ Failed to read fallback mods-database.json: {}", LOG_PREFIX, e.getMessage());
+          "{} ⚠ Failed to read mods-database-override.json: {}", LOG_PREFIX, e.getMessage());
     }
 
-    Constants.LOG.error("{} ❌ Could not load any valid mods-database.json!", LOG_PREFIX);
     return new JsonObject();
+  }
+
+  private static void createOverrideTemplate() {
+    try {
+      Files.createDirectories(configDir);
+      Path overrideFile = getOverrideFile();
+      String template =
+"""
+{
+  "description": "Override entries from mods-database.json. This file is never modified automatically.",
+  "server": [
+    "server-override-mod-id"
+  ],
+  "client": [
+    "client-override-mod-id"
+  ],
+  "both": [
+    "both-override-mod-id"
+  ]
+}
+""";
+      Files.writeString(overrideFile, template, StandardCharsets.UTF_8);
+      Constants.LOG.info("{} ✅ Created mods-database-override.json template.", LOG_PREFIX);
+    } catch (IOException e) {
+      Constants.LOG.warn(
+          "{} ⚠ Failed to create mods-database-override.json template: {}",
+          LOG_PREFIX,
+          e.getMessage());
+    }
   }
 
   public static Map<String, String> getSortedModDatabaseMap(JsonObject jsonObject) {
@@ -128,6 +225,20 @@ public class ModsDatabaseUpdater {
     addEntriesToMap(jsonObject, "server", "server", modIdMap);
     addEntriesToMap(jsonObject, "both", "default", modIdMap);
     return modIdMap;
+  }
+
+  public static Set<String> getSortedModDatabaseSet(JsonObject jsonObject) {
+    Set<String> modIdSet = new java.util.TreeSet<>();
+    if (jsonObject.has("client")) {
+      jsonObject.getAsJsonArray("client").forEach(e -> modIdSet.add(e.getAsString()));
+    }
+    if (jsonObject.has("server")) {
+      jsonObject.getAsJsonArray("server").forEach(e -> modIdSet.add(e.getAsString()));
+    }
+    if (jsonObject.has("both")) {
+      jsonObject.getAsJsonArray("both").forEach(e -> modIdSet.add(e.getAsString()));
+    }
+    return modIdSet;
   }
 
   private static void addEntriesToMap(
@@ -145,15 +256,83 @@ public class ModsDatabaseUpdater {
       for (String key : VALID_KEYS) {
         if (!jsonObject.has(key) || !jsonObject.get(key).isJsonArray()) {
           Constants.LOG.warn(
-              "{} ⚠ Key '{}' missing or invalid in mods-database.json", LOG_PREFIX, key);
+              "{} ⚠ Key '{}' missing or invalid in mods database JSON", LOG_PREFIX, key);
           return null;
         }
       }
       return jsonObject;
     } catch (Exception e) {
-      Constants.LOG.warn("{} ⚠ Failed to parse mods-database.json: {}", LOG_PREFIX, e.getMessage());
+      Constants.LOG.warn("{} ⚠ Failed to parse mods database JSON: {}", LOG_PREFIX, e.getMessage());
       return null;
     }
+  }
+
+  private static void validateDuplicateModIds(JsonObject jsonObject, String fileName) {
+    Map<String, String> modIdToCategory = new java.util.HashMap<>();
+
+    for (String category : VALID_KEYS) {
+      if (jsonObject.has(category) && jsonObject.get(category).isJsonArray()) {
+        jsonObject
+            .getAsJsonArray(category)
+            .forEach(
+                element -> {
+                  String modId = element.getAsString();
+                  if (modIdToCategory.containsKey(modId)) {
+                    Constants.LOG.error(
+                        "{} ❌ Duplicate mod ID '{}' found in both '{}' and '{}' in {}",
+                        LOG_PREFIX,
+                        modId,
+                        modIdToCategory.get(modId),
+                        category,
+                        fileName);
+                  } else {
+                    modIdToCategory.put(modId, category);
+                  }
+                });
+      }
+    }
+  }
+
+  private static JsonObject applyOverrides(JsonObject baseDatabase, JsonObject overrideDatabase) {
+    JsonObject mergedDatabase = new JsonObject();
+
+    // Collect all mod IDs from override database
+    Set<String> overrideModIds = new java.util.HashSet<>();
+    for (String category : VALID_KEYS) {
+      if (overrideDatabase.has(category) && overrideDatabase.get(category).isJsonArray()) {
+        overrideDatabase
+            .getAsJsonArray(category)
+            .forEach(element -> overrideModIds.add(element.getAsString()));
+      }
+    }
+
+    // Copy base database entries excluding those in override
+    for (String category : VALID_KEYS) {
+      com.google.gson.JsonArray mergedArray = new com.google.gson.JsonArray();
+
+      if (baseDatabase.has(category) && baseDatabase.get(category).isJsonArray()) {
+        baseDatabase
+            .getAsJsonArray(category)
+            .forEach(
+                element -> {
+                  String modId = element.getAsString();
+                  if (!overrideModIds.contains(modId)) {
+                    mergedArray.add(modId);
+                  }
+                });
+      }
+
+      // Add override entries
+      if (overrideDatabase.has(category) && overrideDatabase.get(category).isJsonArray()) {
+        overrideDatabase
+            .getAsJsonArray(category)
+            .forEach(element -> mergedArray.add(element.getAsString()));
+      }
+
+      mergedDatabase.add(category, mergedArray);
+    }
+
+    return mergedDatabase;
   }
 
   private static boolean isManuallyModified(Path path) {
