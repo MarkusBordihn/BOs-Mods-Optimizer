@@ -22,11 +22,13 @@ package de.markusbordihn.modsoptimizer.data;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.LocalDateTime;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class ModFileParserTests {
 
   @Test
+  @DisplayName("Parse standard ISO 8601 timestamp correctly")
   void testStandardTimestamp() {
     assertEquals(
         LocalDateTime.of(2024, 12, 8, 3, 10, 9),
@@ -34,6 +36,7 @@ class ModFileParserTests {
   }
 
   @Test
+  @DisplayName("Parse non-standard timestamp format correctly")
   void testNoneStandardTimestamp() {
     assertEquals(
         LocalDateTime.of(2024, 12, 8, 0, 19, 01),
@@ -41,6 +44,7 @@ class ModFileParserTests {
   }
 
   @Test
+  @DisplayName("Parse timestamp with nanoseconds correctly")
   void testNanoTimestamp() {
     LocalDateTime result = ModFileParser.parseTimestamp("2024-12-08T03:10:09.753051715");
     assertEquals(2024, result.getYear());
@@ -48,6 +52,7 @@ class ModFileParserTests {
   }
 
   @Test
+  @DisplayName("Parse zoned timestamp with nanoseconds correctly")
   void testNanoZonedTimestamp() {
     assertEquals(
         LocalDateTime.of(2024, 12, 8, 3, 10, 9, 753051715),
@@ -55,11 +60,13 @@ class ModFileParserTests {
   }
 
   @Test
+  @DisplayName("Return empty timestamp for invalid input")
   void testInvalidTimestamp() {
     assertEquals(ModFileData.EMPTY_TIMESTAMP, ModFileParser.parseTimestamp("invalid"));
   }
 
   @Test
+  @DisplayName("Return empty timestamp for null input")
   void testNullTimestamp() {
     assertEquals(ModFileData.EMPTY_TIMESTAMP, ModFileParser.parseTimestamp(null));
   }

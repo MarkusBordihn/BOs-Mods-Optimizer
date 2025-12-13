@@ -21,28 +21,34 @@ package de.markusbordihn.modsoptimizer.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModEnvironment;
 import java.io.File;
 import java.util.Map;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class ModsDatabaseConfigTests {
 
   @Test
+  @DisplayName("Config file exists and is accessible")
   void testGetConfigFile() {
     File modsDatabaseConfigFile = ModsDatabaseConfig.getConfigFile();
+    assertNotNull(modsDatabaseConfigFile);
     assertTrue(modsDatabaseConfigFile.exists());
   }
 
   @Test
+  @DisplayName("Config map is loaded and not empty")
   void testGetConfig() {
     Map<String, String> modsDatabaseConfig = ModsDatabaseConfig.getConfig();
     assertFalse(modsDatabaseConfig.isEmpty());
   }
 
   @Test
+  @DisplayName("Config contains expected mod IDs")
   void testContainsMod() {
     assertTrue(ModsDatabaseConfig.containsMod("server_side_mod_id"));
     assertTrue(ModsDatabaseConfig.containsMod("client_side_mod_id"));
@@ -50,6 +56,7 @@ class ModsDatabaseConfigTests {
   }
 
   @Test
+  @DisplayName("Correct mod environment is returned for each mod type")
   void testGetModEnvironment() {
     assertEquals(ModEnvironment.SERVER, ModsDatabaseConfig.getModEnvironment("server_side_mod_id"));
     assertEquals(ModEnvironment.CLIENT, ModsDatabaseConfig.getModEnvironment("client_side_mod_id"));

@@ -181,4 +181,9 @@ public class ModsOptimizerService {
   public long getTotalStartTime() {
     return this.totalStartTime;
   }
+
+  public void cleanup() {
+    Constants.LOG.info("♻ Cleanup resources ...");
+    ModData.clear();
+  }
 }
