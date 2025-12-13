@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModEnvironment;
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModType;
 import java.io.File;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class ModDatabaseTests {
@@ -47,12 +48,14 @@ class ModDatabaseTests {
       new File("src/test/resources/testfile/mods_sample/service");
 
   @Test
+  @DisplayName("Test mod path exists and is accessible")
   void testModPathExists() {
-    System.out.printf("Test Mod Files: %s\n", testModFiles);
+    System.out.printf("Test Mod Files: %s%n", testModFiles);
     assertTrue(testModFiles.exists());
   }
 
   @Test
+  @DisplayName("Read NeoForge mod info correctly")
   void testReadModInfo_NeoForge() {
     ModFileData neoModFileData01 = ModData.readModInfo(testModFiles, "neoforge_test_mod_01.jar");
     assertEquals(ModType.NEOFORGE, neoModFileData01.modType());
@@ -61,6 +64,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Forge mod info from multiple test files")
   void testReadModInfo_Forge() {
     ModFileData modFileData01 = ModData.readModInfo(testModFiles, "forge_test_mod_01.jar");
     assertEquals(ModType.FORGE, modFileData01.modType());
@@ -84,6 +88,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Fabric mod info correctly")
   void testReadModInfo_Fabric() {
     ModFileData fabricModFileData01 = ModData.readModInfo(testModFiles, "fabric_test_mod_01.jar");
     assertEquals(ModType.FABRIC, fabricModFileData01.modType());
@@ -92,6 +97,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Quilt mod info correctly")
   void testReadModInfo_Quilt() {
     ModFileData quiltModFileData01 = ModData.readModInfo(testModFiles, "quilt_test_mod_01.jar");
     assertEquals(ModType.QUILT, quiltModFileData01.modType());
@@ -100,6 +106,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read broken mod samples with mixed type")
   void testReadModInfo_Broken_Samples() {
     ModFileData sampleModfileData01 =
         ModData.readModInfo(
@@ -110,7 +117,8 @@ class ModDatabaseTests {
   }
 
   @Test
-  void testReadRawModInfo_NeoForge_Samples() {
+  @DisplayName("Read NeoForge mod samples correctly")
+  void testReadModInfo_NeoForge_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModClientSampleFiles, "appleskin-neoforge-mc1.20.5-3.0.5.jar");
     assertEquals(ModType.NEOFORGE, sampleModFileData01.modType());
@@ -126,6 +134,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Forge default mod samples correctly")
   void testReadModInfo_Forge_Default_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModBothSampleFiles, "easy_mob_farm_1.20.1-6.5.0.jar");
@@ -154,6 +163,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Forge mods with unknown environment correctly")
   void testReadModInfo_Forge_Unknown_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModBothSampleFiles, "Botania-1.18.2-435.jar");
@@ -169,6 +179,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Forge server-side mod samples correctly")
   void testReadModInfo_Forge_Server_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModServerSampleFiles, "letmedespawn-1.1.1.jar");
@@ -178,6 +189,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Forge client-side mod samples correctly")
   void testReadModInfo_Forge_Client_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModClientSampleFiles, "ImmediatelyFast-Forge-1.2.8+1.20.4.jar");
@@ -211,6 +223,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Quilt client-side mod samples correctly")
   void testReadModInfo_Quilt_Client_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModClientSampleFiles, "effective-2.1.1+1.19.2.jar");
@@ -220,6 +233,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Forge language provider mod samples correctly")
   void testReadModInfo_Forge_Language_Provider_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModLibrarySampleFiles, "gml-4.0.9-all.jar");
@@ -229,6 +243,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Forge library mod samples correctly")
   void testReadModInfo_Forge_Library_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModLibrarySampleFiles, "kotlinforforge-4.9.0-all.jar");
@@ -238,6 +253,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read mixed service mod samples correctly")
   void testReadModInfo_Mixed_Service_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModServiceSampleFiles, "Connector-1.0.0-beta.36+1.20.1.jar");
@@ -247,6 +263,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read Fabric mod samples correctly")
   void testReadModInfo_Fabric_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModClientSampleFiles, "physics-mod-3.0.11-mc-1.20.4-fabric.jar");
@@ -262,6 +279,7 @@ class ModDatabaseTests {
   }
 
   @Test
+  @DisplayName("Read datapack mod samples correctly")
   void testReadModInfo_Datapack_Samples() {
     ModFileData sampleModFileData01 =
         ModData.readModInfo(testModDatapackSampleFiles, "explorify-v1.3.0-mc1.20.jar");
