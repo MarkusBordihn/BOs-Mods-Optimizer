@@ -5,6 +5,30 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v4.3.0
+
+- Fixed #55, #54 by `adding mods-database-override.json` which will never be overwritten for
+  consistent manual
+  changes by the user.
+- Fixed crashes by moving `midnightlib` to client and server mod list.
+- Fixed issue with automatic updates and wrongly calculated hash values.
+- Added `mods-database-override.json` support and improved automatic updates for
+  `mods-database.json`.
+- Added memory resources clean up after run.
+- Improved unit tests and added additional test files for mods-database.json and
+  mods-database-override.json.
+- Increased online update check interval to 48 hours.
+
+### v4.2.0
+
+- Fixed #45 by adding `Create Cyber Googles`, `Crearte Schematics` and `JER - Just Enough Resources`
+  to client
+  side mod list.
+- Added unit tests for timestamp parsing functionality.
+- Added preprocessing for TOML files to handle invalid keys and improve logging.
+- Improved support for NeoForge mod type detection.
+- Improved timestamp parsing to support multiple formats and handle invalid timestamps gracefully.
+
 ### v4.1.0
 
 - Fixed #41 by adding support for "alternative" mods.toml entries.
@@ -22,7 +46,7 @@ For the full changelog, please go to the [GitHub History][history] instead.
 
 ### v3.0.0
 
-- Fixed #32 by moving `Better Clouds Reforged` to the default mod list.
+- Fixed #32 by moving `Distant Horizons` to the default mod list.
 - Fixed #31 by adding `Better Clouds Reforged` to the client side mod list.
 - Fixed #30 by adding `Create: Fuel & Water Information` to the client side mod list.
 - Fixed #29 by adding `Elytra Utilities` to the client side mod list.

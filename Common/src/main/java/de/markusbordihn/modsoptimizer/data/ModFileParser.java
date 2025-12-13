@@ -31,9 +31,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.jar.Attributes;
@@ -49,8 +53,12 @@ public class ModFileParser {
   public static final String MANIFEST_IMPLEMENTATION_TITLE = "Implementation-Title";
   public static final String MANIFEST_SPECIFICATION_TITLE = "Specification-Title";
   public static final String MANIFEST_FML_MOD_TYPE = "FMLModType";
-  public static final DateTimeFormatter dateTimeFormatter =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
+  private static final List<DateTimeFormatter> TIMESTAMP_FORMATTERS =
+      List.of(
+          DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"),
+          DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.n"),
+          DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nX"),
+          DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm:ss"));
 
   protected ModFileParser() {}
 
@@ -106,6 +114,8 @@ public class ModFileParser {
     // File based check for data packs, Forge and Fabric mods.
     if (jarFile.getEntry("META-INF/mods.toml") != null) {
       return ModType.FORGE;
+    } else if (jarFile.getEntry("META-INF/neoforge.mods.toml") != null) {
+      return ModType.NEOFORGE;
     } else if (jarFile.getEntry("fabric.mod.json") != null) {
       return ModType.FABRIC;
     } else if (jarFile.getEntry("quilt.mod.json") != null) {
@@ -572,14 +582,26 @@ public class ModFileParser {
     return ModFileData.EMPTY_TIMESTAMP;
   }
 
-  private static LocalDateTime parseTimestamp(String timestamp) {
-    if (timestamp != null && !timestamp.isEmpty()) {
+  public static LocalDateTime parseTimestamp(String timestamp) {
+    if (timestamp == null || timestamp.isEmpty()) {
+      return ModFileData.EMPTY_TIMESTAMP;
+    }
+
+    for (DateTimeFormatter formatter : TIMESTAMP_FORMATTERS) {
       try {
-        return LocalDateTime.parse(timestamp, dateTimeFormatter);
-      } catch (Exception e) {
-        Constants.LOG.warn("Was unable to parse timestamp {}:", timestamp);
+        return LocalDateTime.parse(timestamp, formatter);
+      } catch (DateTimeParseException ignored) {
+        // Try next format
       }
     }
+
+    // Try ISO Instant (e.g. 2024-12-08T03:10:09.753051715Z)
+    try {
+      return LocalDateTime.ofInstant(Instant.parse(timestamp), ZoneOffset.UTC);
+    } catch (DateTimeParseException e) {
+      Constants.LOG.warn("Unable to parse timestamp: {}", timestamp);
+    }
+
     return ModFileData.EMPTY_TIMESTAMP;
   }
 
