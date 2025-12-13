@@ -25,11 +25,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import com.github.zafarkhaja.semver.Version;
 import de.markusbordihn.modsoptimizer.Constants;
 import de.markusbordihn.modsoptimizer.data.VersionTestData;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class SemanticVersionUtilsTests {
 
   @Test
+  @DisplayName("Parse various semantic version formats correctly")
   void testParseVersion() {
     for (String semanticVersion : VersionTestData.versionList) {
       Version version = SemanticVersionUtils.parseVersion(semanticVersion);
@@ -39,6 +41,7 @@ class SemanticVersionUtilsTests {
   }
 
   @Test
+  @DisplayName("Remove unnecessary version parts like mc version and build info")
   void testRemoveUnnecessaryVersionParts() {
     assertEquals("1.2", SemanticVersionUtils.removeUnnecessaryVersionParts("1.2+mc1.18.x"));
     assertEquals(
@@ -57,6 +60,7 @@ class SemanticVersionUtilsTests {
   }
 
   @Test
+  @DisplayName("Normalize version strings to standard format")
   void testNormalizeVersion() {
     assertEquals("1.2.0", SemanticVersionUtils.normalizeVersion("1.2+mc1.18.x"));
     assertEquals("1.4.5-43", SemanticVersionUtils.normalizeVersion("1.21.4-1.4.5-build.43"));
@@ -67,6 +71,7 @@ class SemanticVersionUtilsTests {
   }
 
   @Test
+  @DisplayName("Remove leading zeros from version numbers")
   void testRemoveLeadingZeros() {
     assertEquals("1.2.3", SemanticVersionUtils.removeLeadingZeros("01.02.03"));
     assertEquals("1.2.3", SemanticVersionUtils.removeLeadingZeros("1.02.03"));
@@ -75,7 +80,6 @@ class SemanticVersionUtilsTests {
     assertEquals("1.2.0", SemanticVersionUtils.removeLeadingZeros("1.2.0"));
     assertEquals("1.0.3", SemanticVersionUtils.removeLeadingZeros("1.0.3"));
     assertEquals("2.3", SemanticVersionUtils.removeLeadingZeros("0.2.3"));
-    assertEquals("1.2.3", SemanticVersionUtils.removeLeadingZeros("01.02.03"));
     assertEquals("9.0+22", SemanticVersionUtils.removeLeadingZeros("9.0+22"));
   }
 }
