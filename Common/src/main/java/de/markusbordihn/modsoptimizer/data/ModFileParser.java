@@ -599,7 +599,7 @@ public class ModFileParser {
     try {
       return LocalDateTime.ofInstant(Instant.parse(timestamp), ZoneOffset.UTC);
     } catch (DateTimeParseException e) {
-      System.err.println("⚠️  Unable to parse timestamp: " + timestamp);
+      Constants.LOG.warn("Unable to parse timestamp: {}", timestamp);
     }
 
     return ModFileData.EMPTY_TIMESTAMP;
