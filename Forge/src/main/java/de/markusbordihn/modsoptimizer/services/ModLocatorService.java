@@ -70,6 +70,9 @@ public class ModLocatorService implements IModLocator {
     Constants.LOG.info(
         "⏱ Mod Optimizer needs {} ms in total.",
         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - modsOptimizer.getTotalStartTime()));
+
+    // Cleanup resources.
+    modsOptimizer.cleanup();
   }
 
   @Override
