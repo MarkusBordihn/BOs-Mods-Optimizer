@@ -5,6 +5,20 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [GitHub History][history] instead.
 
+### v4.3.0
+
+- Fixed #55, #54 by `adding mods-database-override.json` which will never be overwritten for
+  consistent manual
+  changes by the user.
+- Fixed crashes by moving `midnightlib` to client and server mod list.
+- Fixed issue with automatic updates and wrongly calculated hash values.
+- Added `mods-database-override.json` support and improved automatic updates for
+  `mods-database.json`.
+- Added memory resources clean up after run.
+- Improved unit tests and added additional test files for mods-database.json and
+  mods-database-override.json.
+- Increased online update check interval to 48 hours.
+
 ### v4.2.0
 
 - Fixed #45 by adding `Create Cyber Googles`, `Crearte Schematics` and `JER - Just Enough Resources`

@@ -202,6 +202,18 @@ public class ModData {
     return new HashMap<>(duplicatedModsMap);
   }
 
+  public static void clear() {
+    duplicatedModsMap.clear();
+    knownModsMap.clear();
+    clientModsSet.clear();
+    dataPackModsSet.clear();
+    serverModsSet.clear();
+    serviceModsSet.clear();
+    libraryModsSet.clear();
+    defaultModsSet.clear();
+    languageProviderModsSet.clear();
+  }
+
   public static ModFileData readModInfo(Path modFile) {
     return readModInfo(modFile, true);
   }

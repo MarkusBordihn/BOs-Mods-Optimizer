@@ -1,5 +1,6 @@
 {
-  "lastUpdated": "2025-08-27T20:00:00Z",
+  "description": "Automatically updated database. Please make changes only in mods-database-override.json",
+  "lastUpdated": "2025-12-12T21:00:00Z",
   "server": [
     "adaptive_performance_tweaks_core",
     "adaptive_performance_tweaks_gamerules",
@@ -228,7 +229,6 @@
     "mcwifipnp",
     "medievalmusic",
     "merchant-markers",
-    "midnightlib",
     "minimap",
     "mixmetica",
     "modern-ui",
@@ -346,6 +346,7 @@
     "invtweaks",
     "kobolds",
     "lootr",
+    "midnightlib",
     "mysql-jdbc",
     "mysql_jdbc",
     "paraglider",
