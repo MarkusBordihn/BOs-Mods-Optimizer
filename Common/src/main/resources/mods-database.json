@@ -1,6 +1,6 @@
 {
   "description": "Automatically updated database. Please make changes only in mods-database-override.json",
-  "lastUpdated": "2025-12-12T21:00:00Z",
+  "lastUpdated": "2025-12-12T22:00:00Z",
   "server": [
     "adaptive_performance_tweaks_core",
     "adaptive_performance_tweaks_gamerules",
