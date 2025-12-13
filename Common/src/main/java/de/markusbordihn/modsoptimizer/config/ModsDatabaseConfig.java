@@ -54,26 +54,44 @@ public class ModsDatabaseConfig {
   private static String debugForceSide = "default";
 
   static {
-    // Create config file if not exists and read config file.
     File configFile = getConfigFile();
     if (configFile == null || !configFile.exists()) {
       configFile = createConfigFile(configFile);
     }
     readConfigFile(configFile);
 
-    // Create mods database file if not exists.
     if (allowRemoteDatabase) {
       ModsDatabaseUpdater.updateFromRemoteIfNeeded();
     }
     JsonObject json = ModsDatabaseUpdater.getModsDatabase();
     modsMap.putAll(ModsDatabaseUpdater.getSortedModDatabaseMap(json));
+
+    JsonObject overrideJson = ModsDatabaseUpdater.getModsDatabaseOverride();
+    Set<String> overrideKeys = ModsDatabaseUpdater.getSortedModDatabaseSet(overrideJson);
+    if (!overrideKeys.isEmpty()) {
+      Map<String, String> overrides = ModsDatabaseUpdater.getSortedModDatabaseMap(overrideJson);
+      for (Map.Entry<String, String> entry : overrides.entrySet()) {
+        String modId = entry.getKey();
+        String newType = entry.getValue();
+        String oldType = modsMap.get(modId);
+        if (oldType != null && !oldType.equals(newType)) {
+          Constants.LOG.info(
+              "{} Override: {} changed from {} to {}", Constants.MOD_NAME, modId, oldType, newType);
+        } else if (oldType == null) {
+          Constants.LOG.info("{} Override: {} set to {}", Constants.MOD_NAME, modId, newType);
+        }
+      }
+      modsMap.putAll(overrides);
+    }
+
     Constants.LOG.info(
-        "{} Mods Database Config File loaded with {} mods client: {}, server: {}, default: {}.",
+        "{} Mods Database Config File loaded with {} mods client: {}, server: {}, default: {}{}",
         Constants.MOD_NAME,
         modsMap.size(),
         modsMap.values().stream().filter(modType -> modType.equals("client")).count(),
         modsMap.values().stream().filter(modType -> modType.equals("server")).count(),
-        modsMap.values().stream().filter(modType -> modType.equals("default")).count());
+        modsMap.values().stream().filter(modType -> modType.equals("default")).count(),
+        overrideKeys.isEmpty() ? "." : " (" + overrideKeys.size() + " overrides).");
   }
 
   protected ModsDatabaseConfig() {}
