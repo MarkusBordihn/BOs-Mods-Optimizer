@@ -106,6 +106,8 @@ public class ModFileParser {
     // File based check for data packs, Forge and Fabric mods.
     if (jarFile.getEntry("META-INF/mods.toml") != null) {
       return ModType.FORGE;
+    } else if (jarFile.getEntry("META-INF/neoforge.mods.toml") != null) {
+      return ModType.NEOFORGE;
     } else if (jarFile.getEntry("fabric.mod.json") != null) {
       return ModType.FABRIC;
     } else if (jarFile.getEntry("quilt.mod.json") != null) {
