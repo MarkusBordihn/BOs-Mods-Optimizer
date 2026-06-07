@@ -1,64 +1,39 @@
 plugins {
-  id 'java'
-  id 'org.spongepowered.gradle.vanilla' version '0.2.1-SNAPSHOT'
-  id 'maven-publish'
-  id 'com.matthewprenger.cursegradle' version '1.4.0'
-  id 'nu.studer.credentials' version '1.0.7'
+  id 'net.neoforged.moddev' version '2.0.126'
 }
 
-archivesBaseName = "${mod_name}-common-${minecraft_version}"
+base {
+  archivesName = "${mod_name}-common-${minecraft_version}"
+}
 
-minecraft {
-  version(minecraft_version)
-  runs {
-    if (project.hasProperty('common_runs_enabled') ? project.findProperty('common_runs_enabled').toBoolean() : true) {
-
-      server(project.hasProperty('common_server_run_name') ? project.findProperty('common_server_run_name') : 'vanilla_server') {
-        workingDirectory(this.file("run"))
-      }
-      client(project.hasProperty('common_client_run_name') ? project.findProperty('common_client_run_name') : 'vanilla_client') {
-        workingDirectory(this.file("run"))
-      }
-    }
-  }
+neoForge {
+  neoFormVersion = project.neo_form_version
+  addModdingDependenciesTo(sourceSets.test)
 }
 
 dependencies {
-  compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.5'
-
-  // Test Framework
-  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-  testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-  testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.1'
-}
-
-processResources {
-  def buildProps = project.properties.clone()
-  filesMatching(['pack.mcmeta']) {
-    expand buildProps
-  }
+  compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.7'
+  compileOnly 'com.moandjiezana.toml:toml4j:0.7.2'
+  compileOnly 'com.github.zafarkhaja:java-semver:0.9.0'
+  testImplementation 'com.moandjiezana.toml:toml4j:0.7.2'
+  testImplementation 'com.github.zafarkhaja:java-semver:0.9.0'
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
   useJUnitPlatform()
-  testLogging {
-    events "passed", "skipped", "failed"
+}
+
+processResources {
+  inputs.property "version", project.version
+
+  filesMatching(['pack.mcmeta']) {
+    expand "version": project.version
   }
 }
 
-publishing {
-  publications {
-    mavenJava(MavenPublication) {
-      groupId project.group
-      artifactId project.archivesBaseName
-      version project.version
-      from components.java
-    }
-  }
-
-  repositories {
-    maven {
-      url "file://" + System.getenv("local_maven")
-    }
-  }
+tasks.register('prepareWorkspace') {
+  description = 'Prepares the workspace (compatibility task for moddev)'
+  group = 'neoforge'
 }

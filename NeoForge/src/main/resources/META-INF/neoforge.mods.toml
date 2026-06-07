@@ -1,3 +1,5 @@
+modLoader = "javafml"
+loaderVersion = "[5,)"
 license = "MIT"
 issueTrackerURL = "https://github.com/MarkusBordihn/BOs-Mods-Optimizer/issues"
 
@@ -14,14 +16,14 @@ displayTest = "IGNORE_ALL_VERSION"
 
 [[dependencies.mods_optimizer]]
 modId = "neoforge"
-mandatory = true
-versionRange = "[21.10.0,)"
+type = "required"
+versionRange = "[21.11.0,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.mods_optimizer]]
 modId = "minecraft"
-mandatory = true
-versionRange = "[1.21.10,1.22)"
+type = "required"
+versionRange = "[1.21.11,1.22)"
 ordering = "NONE"
 side = "BOTH"

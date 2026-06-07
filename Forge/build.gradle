@@ -1,63 +1,74 @@
 plugins {
   id 'maven-publish'
-  id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
-  id 'com.matthewprenger.cursegradle' version '1.4.0'
+  id 'net.minecraftforge.gradle' version '7.0.0-beta.46'
+  id 'net.darkhax.curseforgegradle' version '1.1.28'
   id 'nu.studer.credentials' version '3.0'
   id "com.modrinth.minotaur" version "2.+"
-  id 'com.gradleup.shadow' version '8.3.0'
+  id 'com.gradleup.shadow' version '9.0.0-beta4'
 }
 
 apply plugin: 'net.minecraftforge.gradle'
 
-archivesBaseName = "${mod_id}-forge-${minecraft_version}"
+base {
+  archivesName = "${mod_id}-forge-${minecraft_version}"
+}
 
 minecraft {
-  mappings channel: 'official', version: minecraft_version
-
-  reobf = false
-  copyIdeResources = true
+  mappings channel: 'official', version: "${project.minecraft_version}"
 
   runs {
+    configureEach {
+      systemProperty 'forge.logging.console.level', 'debug'
+      systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
+    }
+
     client {
-      workingDirectory project.file('run')
-      taskName 'Client'
-      mods {
-        modClientRun {
-          source sourceSets.main
-          source project(":Common").sourceSets.main
-        }
-      }
+      workingDir = project.file('run/client')
     }
 
     server {
-      workingDirectory project.file('run')
-      taskName 'Server'
-      mods {
-        modServerRun {
-          source sourceSets.main
-          source project(":Common").sourceSets.main
-        }
-      }
+      workingDir = project.file('run/server')
+    }
+
+    gameTestServer {
+      workingDir = project.file('run/gametest')
+      systemProperty 'forge.enableGameTest', 'true'
+      systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
     }
 
     data {
-      workingDirectory project.file('run')
+      workingDir = project.file('run/data')
       args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-      taskName 'Data'
-      mods {
-        modDataRun {
-          source sourceSets.main
-          source project(":Common").sourceSets.main
-        }
-      }
     }
   }
 }
 
-sourceSets.main.resources.srcDir 'src/generated/resources'
+sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-// Curse Maven Plugin
 repositories {
+  mavenCentral()
+  maven minecraft.mavenizer
+  maven fg.forgeMaven
+  maven fg.minecraftLibsMaven
+  maven {
+    name = 'Forge'
+    url = 'https://maven.minecraftforge.net'
+  }
+  maven {
+    name = 'Minecraft libraries'
+    url = 'https://libraries.minecraft.net'
+  }
+  exclusiveContent {
+    forRepository {
+      maven {
+        name = 'Sponge'
+        url = 'https://repo.spongepowered.org/repository/maven-public'
+      }
+    }
+    filter {
+      includeGroupAndSubgroups('org.spongepowered')
+    }
+  }
   maven {
     url "https://www.cursemaven.com"
     content {
@@ -73,7 +84,9 @@ configurations {
 }
 
 dependencies {
-  minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+  implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+
+  annotationProcessor 'net.minecraftforge:eventbus-validator:7.0-beta.12'
 
   // Include Common code
   compileOnly project(":Common")
@@ -88,6 +101,10 @@ dependencies {
 
 tasks.withType(JavaCompile).configureEach {
   source(project(":Common").sourceSets.main.allSource)
+}
+
+tasks.withType(Test).configureEach {
+  failOnNoDiscoveredTests = false
 }
 
 processResources {
@@ -115,7 +132,6 @@ shadowJar {
   configurations = [project.configurations.shade]
   relocate 'com.moandjiezana.toml', "${project.group}.thirdparty.toml4j"
   relocate 'com.github.zafarkhaja', "${project.group}.thirdparty.semver"
-  finalizedBy 'reobfShadowJar'
   dependencies {
     include(dependency('com.moandjiezana.toml:toml4j:.*'))
     include(dependency('com.github.zafarkhaja:java-semver:.*'))
@@ -125,52 +141,47 @@ shadowJar {
 
 assemble.dependsOn shadowJar
 
-reobf {
-  shadowJar {}
-}
-
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId project.group
-      artifactId project.archivesBaseName
-      version project.version
       artifact jar
     }
   }
 }
 
-curseforge {
-  apiKey = "${credentials.forKey('curseforge_api_token')}"
-  project {
-    id = "${curseforge_project_id}"
-    changelog = file("../CHANGELOG.md")
-    changelogType = 'markdown'
-    releaseType = "${project.curseforge_release_type}"
-    addGameVersion("${minecraft_version}")
-    addGameVersion("Forge")
-    mainArtifact shadowJar
-  }
-  options {
-    forgeGradleIntegration = true
+sourceSets.main {
+  def dir = layout.buildDirectory.dir("sourcesSets/main")
+  output.resourcesDir = dir
+  java.destinationDirectory = dir
+}
+
+// CurseForge Publishing
+if (project.hasProperty('curseforge_project_id') && project.curseforge_project_id) {
+  tasks.register('curseforge', net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+    group = 'publishing'
+    description = 'Uploads to CurseForge'
+    apiToken = "${credentials.forKey('curseforge_api_token')}"
+
+    def mainFile = upload(project.curseforge_project_id, shadowJar)
+    mainFile.changelogType = 'markdown'
+    mainFile.changelog = rootProject.file("CHANGELOG.md").text
+    mainFile.releaseType = project.curseforge_release_type
+    mainFile.addModLoader('Forge')
+    mainFile.addGameVersion(project.minecraft_version)
   }
 }
 
-modrinth {
-  token = "${credentials.forKey('modrinth_api_token')}"
-  projectId = "${modrinth_project_id}"
-  versionNumber = "${version}"
-  changelog = file("../CHANGELOG.md").text
-  versionType = "${modrinth_release_type}"
-  versionName = "${mod_name} ${version}"
-  uploadFile = shadowJar
-  gameVersions = ["${minecraft_version}"]
-  loaders = ["forge"]
-}
-
-// This will eventually be migrated to ForgeGradle so modders don't need to manually do it.
-sourceSets.each {
-  def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
-  it.output.resourcesDir = dir
-  it.java.destinationDirectory = dir
+// Modrinth Publishing
+if (project.hasProperty('modrinth_project_id') && project.modrinth_project_id) {
+  modrinth {
+    token = "${credentials.forKey('modrinth_api_token')}"
+    projectId = "${project.modrinth_project_id}"
+    versionNumber = "${project.version}"
+    versionType = "${project.modrinth_release_type}"
+    versionName = "${project.mod_name} ${project.version}"
+    changelog = rootProject.file("CHANGELOG.md").text
+    uploadFile = shadowJar
+    gameVersions = ["${project.minecraft_version}"]
+    loaders = ["forge"]
+  }
 }
