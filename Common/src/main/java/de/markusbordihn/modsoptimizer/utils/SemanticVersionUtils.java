@@ -27,7 +27,7 @@ public class SemanticVersionUtils {
 
   public static final Version EMPTY_VERSION = Version.valueOf("0.0.0");
   public static final Pattern MC_NAME_VERSION_PATTERN =
-      Pattern.compile("[+_-]?(mc|minecraft)[1,2]{1,2}\\.\\d{1,2}\\.?[0-9x]?");
+      Pattern.compile("[+_-]?(mc|minecraft)\\d{1,2}\\.\\d{1,2}(\\.[0-9x]{1,2})?");
   public static final Pattern FORGE_VERSION_PATTERN = Pattern.compile("[+_-]?(forge)[+_-]?");
   public static final Pattern BUILD_VERSION_PATTERN = Pattern.compile("[_.-]?(build)[_.-]?");
   public static final Pattern LEADING_ZEROS_PATTERN = Pattern.compile("\\.0+\\d");

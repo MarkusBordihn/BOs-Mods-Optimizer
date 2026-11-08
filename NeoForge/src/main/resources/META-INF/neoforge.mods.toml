@@ -17,13 +17,13 @@ displayTest = "IGNORE_ALL_VERSION"
 [[dependencies.mods_optimizer]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.11.0,)"
+versionRange = "[26.1.2.0,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.mods_optimizer]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.11,1.22)"
+versionRange = "[26.1.2,26.2)"
 ordering = "NONE"
 side = "BOTH"
