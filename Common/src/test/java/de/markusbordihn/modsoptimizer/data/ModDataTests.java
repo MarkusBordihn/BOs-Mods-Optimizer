@@ -23,9 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.github.zafarkhaja.semver.Version;
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModEnvironment;
 import de.markusbordihn.modsoptimizer.data.ModFileData.ModType;
 import java.io.File;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -95,6 +97,59 @@ class ModDataTests {
     assertEquals(ModType.FORGE, modFileData05.modType());
     assertEquals(ModEnvironment.BOTH, modFileData05.environment());
     assertNotEquals(ModFileData.EMPTY_MOD_ID, modFileData05.id());
+  }
+
+  @Test
+  @DisplayName("Read NeoForge 26.2+ mod info with bannerFile, iconFile and iconBlur")
+  void testReadRawModInfo_NeoForge_BannerAndIconFile() {
+    ModFileData modFileData = ModData.readRawModInfo(testModFiles, "neoforge_test_mod_03.jar");
+    assertEquals(ModType.NEOFORGE, modFileData.modType());
+    assertEquals(ModEnvironment.BOTH, modFileData.environment());
+    assertEquals("banner_icon_test_mod", modFileData.id());
+    assertEquals("Banner Icon Test Mod", modFileData.name());
+    assertEquals(Version.valueOf("2.1.0"), modFileData.version());
+  }
+
+  @Test
+  @DisplayName("Read NeoForge 26.x client mod info without modLoader")
+  void testReadRawModInfo_NeoForge_ClientWithoutModLoader() {
+    ModFileData modFileData = ModData.readRawModInfo(testModFiles, "neoforge_test_mod_04.jar");
+    assertEquals(ModType.NEOFORGE, modFileData.modType());
+    assertEquals(ModEnvironment.CLIENT, modFileData.environment());
+    assertEquals("client_only_test_mod", modFileData.id());
+    assertEquals("Client Only Test Mod", modFileData.name());
+    assertEquals(Version.valueOf("1.0.3"), modFileData.version());
+    assertEquals(LocalDateTime.of(2026, 11, 8, 10, 15, 30), modFileData.timestamp());
+  }
+
+  @Test
+  @DisplayName("Read Forge 64+ client mod info")
+  void testReadRawModInfo_Forge_Client() {
+    ModFileData modFileData = ModData.readRawModInfo(testModFiles, "forge_test_mod_06.jar");
+    assertEquals(ModType.FORGE, modFileData.modType());
+    assertEquals(ModEnvironment.CLIENT, modFileData.environment());
+    assertEquals("forge_client_test_mod", modFileData.id());
+    assertEquals("Forge Client Test Mod", modFileData.name());
+    assertEquals(Version.valueOf("3.2.1"), modFileData.version());
+    assertEquals(LocalDateTime.of(2026, 11, 8, 10, 15, 30), modFileData.timestamp());
+  }
+
+  @Test
+  @DisplayName("Forge clientSideOnly overrides dependency side BOTH")
+  void testReadRawModInfo_Forge_ClientSideOnly() {
+    ModFileData modFileData = ModData.readRawModInfo(testModFiles, "forge_test_mod_07.jar");
+    assertEquals(ModType.FORGE, modFileData.modType());
+    assertEquals(ModEnvironment.CLIENT, modFileData.environment());
+    assertEquals("client_side_only_test_mod", modFileData.id());
+  }
+
+  @Test
+  @DisplayName("NeoForge ignores clientSideOnly and keeps dependency side")
+  void testReadRawModInfo_NeoForge_IgnoresClientSideOnly() {
+    ModFileData modFileData = ModData.readRawModInfo(testModFiles, "neoforge_test_mod_05.jar");
+    assertEquals(ModType.NEOFORGE, modFileData.modType());
+    assertEquals(ModEnvironment.BOTH, modFileData.environment());
+    assertEquals("ignored_client_side_only_test_mod", modFileData.id());
   }
 
   @Test
