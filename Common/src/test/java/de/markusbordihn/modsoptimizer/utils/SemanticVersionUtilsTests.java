@@ -45,7 +45,7 @@ class SemanticVersionUtilsTests {
   void testRemoveUnnecessaryVersionParts() {
     assertEquals("1.2", SemanticVersionUtils.removeUnnecessaryVersionParts("1.2+mc1.18.x"));
     assertEquals(
-        "1.4.5-43", SemanticVersionUtils.removeUnnecessaryVersionParts("1.21.8-1.4.5-build.43"));
+        "1.4.5-43", SemanticVersionUtils.removeUnnecessaryVersionParts("26.3-1.4.5-build.43"));
     assertEquals(
         "14.15-SNAPSHOT-348",
         SemanticVersionUtils.removeUnnecessaryVersionParts("14.15-SNAPSHOT-348"));
@@ -53,21 +53,24 @@ class SemanticVersionUtilsTests {
         "14.15-348", SemanticVersionUtils.removeUnnecessaryVersionParts("14.15-snapshot-348"));
     assertEquals(
         "Forge-1.3.1+1",
-        SemanticVersionUtils.removeUnnecessaryVersionParts("1.21.8-Forge-1.3.1+build.1"));
+        SemanticVersionUtils.removeUnnecessaryVersionParts("26.3-Forge-1.3.1+build.1"));
     assertEquals(
-        "1.3.1+1", SemanticVersionUtils.removeUnnecessaryVersionParts("1.21.8-forge1.3.1+build.1"));
+        "1.3.1+1", SemanticVersionUtils.removeUnnecessaryVersionParts("26.3-forge1.3.1+build.1"));
     assertEquals("2.4.1", SemanticVersionUtils.removeUnnecessaryVersionParts("2.4.1+mc1.20"));
+    assertEquals("2.4.1", SemanticVersionUtils.removeUnnecessaryVersionParts("2.4.1+mc1.21.11"));
+    assertEquals("2.4.1", SemanticVersionUtils.removeUnnecessaryVersionParts("2.4.1+mc26.1.2"));
+    assertEquals("2.4.1", SemanticVersionUtils.removeUnnecessaryVersionParts("2.4.1-mc26.1"));
   }
 
   @Test
   @DisplayName("Normalize version strings to standard format")
   void testNormalizeVersion() {
     assertEquals("1.2.0", SemanticVersionUtils.normalizeVersion("1.2+mc1.18.x"));
-    assertEquals("1.4.5-43", SemanticVersionUtils.normalizeVersion("1.21.8-1.4.5-build.43"));
+    assertEquals("1.4.5-43", SemanticVersionUtils.normalizeVersion("26.3-1.4.5-build.43"));
     assertEquals("14.15.348", SemanticVersionUtils.normalizeVersion("14.15-SNAPSHOT-348"));
     assertEquals("14.15.348", SemanticVersionUtils.normalizeVersion("14.15-snapshot-348"));
-    assertEquals("1.3.1+1", SemanticVersionUtils.normalizeVersion("1.21.8-Forge-1.3.1+build.1"));
-    assertEquals("1.3.1+1", SemanticVersionUtils.normalizeVersion("1.21.8-forge1.3.1+build.1"));
+    assertEquals("1.3.1+1", SemanticVersionUtils.normalizeVersion("26.3-Forge-1.3.1+build.1"));
+    assertEquals("1.3.1+1", SemanticVersionUtils.normalizeVersion("26.3-forge1.3.1+build.1"));
   }
 
   @Test

@@ -269,6 +269,13 @@ public class ModFileParser {
         environment = ModEnvironment.DATA_PACK;
       }
 
+      // Forge skips clientSideOnly mod files on dedicated servers; NeoForge has no such key.
+      if (environment == ModEnvironment.UNKNOWN
+          && modType == ModType.FORGE
+          && isForgeClientSideOnly(modsToml, path)) {
+        environment = ModEnvironment.CLIENT;
+      }
+
       // Parse version number.
       if (modsToml.getString(modsVersionId) != null
           && !modsToml.getString(modsVersionId).startsWith("${")) {
@@ -603,6 +610,15 @@ public class ModFileParser {
     }
 
     return ModFileData.EMPTY_TIMESTAMP;
+  }
+
+  private static boolean isForgeClientSideOnly(Toml modsToml, Path path) {
+    try {
+      return Boolean.TRUE.equals(modsToml.getBoolean("clientSideOnly"));
+    } catch (ClassCastException e) {
+      Constants.LOG.warn("⚠ Found non-boolean clientSideOnly value in the mods.toml file {}!", path);
+      return false;
+    }
   }
 
   private static boolean hasAttributeValue(String name, Attributes attributes) {
